@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnWarning="true"
+         failOnRisky="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <!-- The test database is dropped and rebuilt on every run. Never point this at real data. -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_DEBUG" value="false" force="true"/>
+        <env name="APP_BASE_PATH" value="" force="true"/>
+        <env name="APP_LOCALE" value="he" force="true"/>
+        <env name="DB_DATABASE" value="spms_test" force="true"/>
+        <env name="SESSION_SECURE" value="false" force="true"/>
+        <env name="DEMO_PASSWORD" value="" force="true"/>
+        <!-- Feature tests fire hundreds of requests in one session; the limiter has its own tests. -->
+        <env name="RATE_LIMIT_WRITES" value="100000" force="true"/>
+        <env name="RATE_LIMIT_EXPORTS" value="100000" force="true"/>
+    </php>
+</phpunit>

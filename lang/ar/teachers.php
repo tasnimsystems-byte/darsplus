@@ -1,0 +1,45 @@
+<?php
+
+return [
+    'title' => 'المعلمون',
+    'add' => 'معلّم/ة جديد/ة',
+    'edit' => 'تعديل معلّم',
+    'fields' => [
+        'last_name' => 'اسم العائلة',
+        'first_name' => 'الاسم الشخصي',
+        'staff_code' => 'رقم الموظف الداخلي',
+        'phone' => 'الهاتف',
+        'user_id' => 'حساب المستخدم',
+        'subject_ids' => 'مواضيع التدريس',
+        'is_active' => 'فعّال/ة',
+    ],
+    'staff_code_help' => 'معرّف داخلي للمدرسة. لا يجوز إدخال رقم الهوية.',
+    'user_help' => 'ربط الحساب يحدّد أيّ الصفوف والطلاب يراها المعلّم في النظام، حسب توزيعاته.',
+    'errors' => [
+        'has_assignments' => 'لا يمكن حذف معلّم له توزيعات تدريس أو تربية صف في سنة مفتوحة.',
+    ],
+    'details' => 'التفاصيل',
+    'no_account' => 'لا يوجد حساب مرتبط',
+    'assignments' => 'توزيعات التدريس – :year',
+    'total_hours' => 'المجموع :hours ساعات أسبوعية',
+    'homeroom_of' => 'تربية الصف:',
+    'no_assignments' => 'لا توجد توزيعات تدريس في هذه السنة.',
+    'positions' => 'الوظائف – :year',
+    'no_positions' => 'لم تُعرَّف وظائف في هذه السنة.',
+    'add_position' => 'إضافة وظيفة',
+    'position_scope_note' => 'وظيفة مع طبقة أو موضوع توسّع نطاق وصول المعلّم إلى الصفوف المناسبة.',
+    'position_fields' => [
+        'position_type' => 'نوع الوظيفة',
+        'grade_level_id' => 'الطبقة',
+        'subject_id' => 'الموضوع',
+        'responsibilities' => 'مجالات المسؤولية',
+    ],
+    'position_types' => [
+        'grade_coordinator' => 'مركّز/ة الطبقة',
+        'subject_coordinator' => 'مركّز/ة الموضوع',
+        'pedagogical_coordinator' => 'مركّز/ة تربوي/ة',
+        'counselor' => 'مستشار/ة',
+        'vice_principal' => 'نائب/ة المدير',
+        'other' => 'أخرى',
+    ],
+];

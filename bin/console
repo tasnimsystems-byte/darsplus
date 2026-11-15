@@ -1,0 +1,199 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use App\Core\App;
+use App\Core\Migrator;
+use App\Core\Session;
+use App\Core\Validator;
+use App\Services\Passwords;
+use Database\Seeders\BaseSeeder;
+use Database\Seeders\DemoSeeder;
+
+if (PHP_SAPI !== 'cli') {
+    exit(1);
+}
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+App::boot(dirname(__DIR__));
+App::useSession(Session::fake());
+
+$command = $argv[1] ?? 'help';
+$args = array_slice($argv, 2);
+$migrator = fn () => new Migrator(App::db(), App::root('database/migrations'));
+
+try {
+    switch ($command) {
+        case 'migrate':
+            $applied = $migrator()->migrate();
+            echo $applied === [] ? "Nothing to migrate.\n" : "Applied:\n  " . implode("\n  ", $applied) . "\n";
+            (new BaseSeeder(App::db()))->run();
+            echo "Permissions and system roles are in sync.\n";
+            break;
+
+        case 'migrate:fresh':
+            $applied = $migrator()->fresh();
+            (new BaseSeeder(App::db()))->run();
+            echo "Database rebuilt (" . count($applied) . " migrations).\n";
+            break;
+
+        case 'seed:demo':
+            $result = (new DemoSeeder(App::db()))->run();
+            echo "Demo users: " . implode(', ', $result['users']) . "\n";
+            echo $result['password_generated'] !== null
+                ? "Generated demo password (shown once): {$result['password_generated']}\n"
+                : "Password: the value of DEMO_PASSWORD in .env\n";
+            break;
+
+        case 'user:create-admin':
+            // Usage: user:create-admin <username> "<full name>" [--generate]
+            $generate = in_array('--generate', $args, true);
+            $args = array_values(array_filter($args, static fn ($a) => $a !== '--generate'));
+            [$username, $fullName] = [$args[0] ?? '', $args[1] ?? ''];
+            if (!preg_match('/^[a-z0-9._-]{3,60}$/', $username) || trim($fullName) === '') {
+                throw new RuntimeException('Usage: user:create-admin <username> "<full name>" [--generate]');
+            }
+            if (App::db()->value('SELECT id FROM users WHERE username = ?', [$username]) !== null) {
+                throw new RuntimeException("User '$username' already exists.");
+            }
+            if ($generate) {
+                $password = Passwords::generate(16);
+            } else {
+                fwrite(STDOUT, 'Password (min 10 chars, letters and digits; input is visible): ');
+                $password = trim((string) fgets(STDIN));
+                if (!Validator::passwordIsStrong($password)) {
+                    throw new RuntimeException('Password does not satisfy the policy.');
+                }
+            }
+            $roleId = App::db()->value("SELECT id FROM roles WHERE is_system = 1 AND code = 'system_admin'");
+            if ($roleId === null) {
+                throw new RuntimeException('Run "migrate" first.');
+            }
+            App::db()->transaction(function () use ($username, $fullName, $password, $roleId, $generate): void {
+                $userId = App::db()->insert('users', [
+                    'username' => $username, 'full_name' => trim($fullName),
+                    'password_hash' => Passwords::hash($password),
+                    'must_change_password' => $generate ? 1 : 0,
+                ]);
+                App::db()->insert('user_roles', ['user_id' => $userId, 'role_id' => $roleId, 'school_id' => null]);
+                App::db()->insert('audit_logs', [
+                    'action' => 'create', 'entity_type' => 'user', 'entity_id' => $userId,
+                    'new_values' => json_encode(['username' => $username, 'via' => 'console']),
+                ]);
+            });
+            echo "System administrator '$username' created.\n";
+            if ($generate) {
+                echo "Temporary password (shown once, must be changed at first login): $password\n";
+            }
+            break;
+
+        case 'backup':
+            // Encrypted backup of the database and the uploaded files (to be run nightly from cron).
+            $files = \App\Services\BackupService::create((string) env('BACKUP_KEY', ''));
+            foreach ($files as $file) {
+                echo 'Written: ' . $file . ' (' . number_format(filesize($file) / 1024, 0) . " KB)\n";
+            }
+            $removed = \App\Services\BackupService::prune((int) env('BACKUP_KEEP_DAYS', 30));
+            echo "Removed $removed backups older than " . (int) env('BACKUP_KEEP_DAYS', 30) . " days.\n";
+            echo "Copy the files to a second location. Without BACKUP_KEY they cannot be opened.\n";
+            break;
+
+        case 'backup:verify':
+            // Proves that a backup opens with the current key and contains a database dump — without restoring it.
+            $file = $args[0] ?? '';
+            if (!is_file($file)) {
+                throw new RuntimeException('Usage: backup:verify <path to .db.enc or .files.enc>');
+            }
+            $plain = gzdecode(\App\Services\BackupService::decrypt((string) file_get_contents($file), (string) env('BACKUP_KEY', '')));
+            if ($plain === false) {
+                throw new RuntimeException('The backup decrypted but is not a valid archive.');
+            }
+            echo str_ends_with($file, '.db.enc')
+                ? 'OK: database dump, ' . substr_count($plain, 'CREATE TABLE') . ' tables, ' . number_format(strlen($plain) / 1024, 0) . " KB.\n"
+                : 'OK: files archive, ' . number_format(strlen($plain) / 1024, 0) . " KB.\n";
+            break;
+
+        case 'backup:restore':
+            // Replaces the contents of the configured database with the backup. Destructive: needs --yes.
+            $file = $args[0] ?? '';
+            if (!is_file($file) || !str_ends_with($file, '.db.enc')) {
+                throw new RuntimeException('Usage: backup:restore <path to .db.enc> --yes');
+            }
+            if (!in_array('--yes', $args, true)) {
+                throw new RuntimeException('This overwrites the database "' . App::config('database.database') . '". Add --yes to proceed.');
+            }
+            $sql = gzdecode(\App\Services\BackupService::decrypt((string) file_get_contents($file), (string) env('BACKUP_KEY', '')));
+            if ($sql === false) {
+                throw new RuntimeException('The backup decrypted but is not a valid dump.');
+            }
+            \App\Services\BackupService::restoreDatabase($sql);
+            echo 'Database "' . App::config('database.database') . "\" restored from $file.\n";
+            echo "Uploaded files are restored separately: decrypt the matching .files.enc with backup:files and unpack it into storage/uploads.\n";
+            break;
+
+        case 'backup:files':
+            // Decrypts a files backup into a .tar next to it, ready to be unpacked into storage/uploads.
+            $file = $args[0] ?? '';
+            if (!is_file($file) || !str_ends_with($file, '.files.enc')) {
+                throw new RuntimeException('Usage: backup:files <path to .files.enc>');
+            }
+            $tar = gzdecode(\App\Services\BackupService::decrypt((string) file_get_contents($file), (string) env('BACKUP_KEY', '')));
+            if ($tar === false) {
+                throw new RuntimeException('The backup decrypted but is not a valid archive.');
+            }
+            $target = substr($file, 0, -4) . '.tar';
+            file_put_contents($target, $tar);
+            echo "Written: $target\n";
+            break;
+
+        case 'notify':
+            // Daily: one in-system reminder per overdue task per day (to be run from cron).
+            $count = 0;
+            foreach (App::db()->all(
+                "SELECT t.id, t.school_id, t.title, t.assignee_user_id FROM tasks t
+                  WHERE t.deleted_at IS NULL AND t.status IN ('open', 'in_progress') AND t.due_date < CURDATE() AND t.assignee_user_id IS NOT NULL
+                    AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.user_id = t.assignee_user_id AND n.type = 'task_overdue'
+                                      AND n.link = CONCAT('/tasks/', t.id) AND n.created_at >= CURDATE())"
+            ) as $task) {
+                $locale = App::db()->value('SELECT COALESCE(u.locale, s.default_locale) FROM users u JOIN schools s ON s.id = ? WHERE u.id = ?', [$task['school_id'], $task['assignee_user_id']]);
+                App::lang()->setLocale($locale);
+                \App\Services\Notifier::send((int) $task['assignee_user_id'], (int) $task['school_id'], 'task_overdue', __('tasks.notify_overdue', ['title' => $task['title']]), null, '/tasks/' . $task['id']);
+                $count++;
+            }
+            echo "Sent $count overdue-task reminders.\n";
+            break;
+
+        case 'cleanup':
+            // Retention: login attempts 90 days, audit log 24 months (docs/01-specification.md §8.4).
+            $a = App::db()->run('DELETE FROM login_attempts WHERE attempted_at < NOW() - INTERVAL 90 DAY')->rowCount();
+            $b = App::db()->run('DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL 24 MONTH')->rowCount();
+            $c = 0;
+            foreach (glob(App::root('storage/cache/import_*')) ?: [] as $file) {
+                if (filemtime($file) < time() - 3600 && unlink($file)) {
+                    $c++;
+                }
+            }
+            echo "Removed $a login attempts, $b audit entries past retention and $c abandoned import files.\n";
+            break;
+
+        default:
+            echo <<<TXT
+            SPMS console
+              migrate                 Apply pending migrations and sync permissions/system roles
+              migrate:fresh           Drop everything and rebuild (local/testing only)
+              seed:demo               Insert fictional demo data (local/testing only)
+              user:create-admin       Create a system administrator: <username> "<full name>" [--generate]
+              backup                  Write an encrypted backup of the database and uploads to storage/backups
+              backup:verify <file>    Check that a backup opens with the current BACKUP_KEY
+              backup:restore <file> --yes   Overwrite the database from a .db.enc backup
+              backup:files <file>     Decrypt a .files.enc backup into a .tar
+              notify                  Send in-system reminders for overdue tasks (run daily)
+              cleanup                 Delete records past their retention period
+
+            TXT;
+    }
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . "\n");
+    exit(1);
+}

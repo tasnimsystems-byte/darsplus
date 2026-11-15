@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'title' => 'المهام',
+    'add' => 'مهمة جديدة',
+    'edit' => 'تعديل المهمة',
+    'fields' => [
+        'title' => 'المهمة',
+        'description' => 'التفاصيل',
+        'assignee_user_id' => 'المسؤول',
+        'due_date' => 'تاريخ الاستحقاق',
+        'priority' => 'الأهمية',
+        'status' => 'الحالة',
+    ],
+    'priorities' => [
+        'low' => 'منخفضة',
+        'normal' => 'عادية',
+        'high' => 'عالية',
+        'urgent' => 'عاجلة',
+    ],
+    'statuses' => [
+        'open' => 'مفتوحة',
+        'in_progress' => 'قيد المعالجة',
+        'done' => 'نُفِّذت',
+        'cancelled' => 'أُلغيت',
+    ],
+    'due' => 'تاريخ الاستحقاق',
+    'board' => 'لوحة المهام',
+    'list' => 'قائمة',
+    'show' => 'العرض',
+    'only_mine' => 'مهامي فقط',
+    'overdue' => 'متأخرة',
+    'notify_assigned' => 'أُسندت إليك مهمة: :title',
+    'notify_overdue' => 'مهمة متأخرة: :title',
+    'assigned_by' => 'أنشأها',
+    'from_meeting' => 'إلى الجلسة التي تقرَّرت فيها',
+    'no_description' => 'لا توجد تفاصيل.',
+    'comments' => 'ملاحظات',
+    'comment_fields' => [
+        'body' => 'ملاحظة جديدة',
+    ],
+    'add_comment' => 'إضافة ملاحظة',
+    'update_status' => 'تحديث الحالة',
+    'board_all' => 'جميع المهام في المدرسة (لوحة الإدارة).',
+    'board_mine' => 'مهامي والمهام التي أنشأتُها.',
+];

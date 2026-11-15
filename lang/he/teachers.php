@@ -1,0 +1,45 @@
+<?php
+
+return [
+    'title' => 'מורים',
+    'add' => 'מורה חדש/ה',
+    'edit' => 'עריכת מורה',
+    'fields' => [
+        'last_name' => 'שם משפחה',
+        'first_name' => 'שם פרטי',
+        'staff_code' => 'מספר עובד פנימי',
+        'phone' => 'טלפון',
+        'user_id' => 'חשבון משתמש',
+        'subject_ids' => 'מקצועות הוראה',
+        'is_active' => 'פעיל/ה',
+    ],
+    'staff_code_help' => 'מזהה פנימי של בית הספר. אין להזין מספר תעודת זהות.',
+    'user_help' => 'קישור לחשבון קובע אילו כיתות ותלמידים המורה רואה במערכת, לפי השיבוצים שלו.',
+    'errors' => [
+        'has_assignments' => 'לא ניתן למחוק מורה שיש לו שיבוצי הוראה או חינוך כיתה בשנה פתוחה.',
+    ],
+    'details' => 'פרטים',
+    'no_account' => 'אין חשבון מקושר',
+    'assignments' => 'שיבוצי הוראה – :year',
+    'total_hours' => 'סה"כ :hours שעות שבועיות',
+    'homeroom_of' => 'חינוך כיתה:',
+    'no_assignments' => 'אין שיבוצי הוראה בשנה זו.',
+    'positions' => 'תפקידים – :year',
+    'no_positions' => 'לא הוגדרו תפקידים בשנה זו.',
+    'add_position' => 'הוספת תפקיד',
+    'position_scope_note' => 'תפקיד עם שכבה או מקצוע מרחיב את היקף הגישה של המורה לכיתות המתאימות.',
+    'position_fields' => [
+        'position_type' => 'סוג התפקיד',
+        'grade_level_id' => 'שכבה',
+        'subject_id' => 'מקצוע',
+        'responsibilities' => 'תחומי אחריות',
+    ],
+    'position_types' => [
+        'grade_coordinator' => 'רכז/ת שכבה',
+        'subject_coordinator' => 'רכז/ת מקצוע',
+        'pedagogical_coordinator' => 'רכז/ת פדגוגי/ת',
+        'counselor' => 'יועץ/ת',
+        'vice_principal' => 'סגן/ית מנהל',
+        'other' => 'אחר',
+    ],
+];

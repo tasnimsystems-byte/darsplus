@@ -1,0 +1,46 @@
+<?php
+
+return [
+    'title' => 'משימות',
+    'add' => 'משימה חדשה',
+    'edit' => 'עריכת המשימה',
+    'fields' => [
+        'title' => 'המשימה',
+        'description' => 'פירוט',
+        'assignee_user_id' => 'אחראי',
+        'due_date' => 'תאריך יעד',
+        'priority' => 'חשיבות',
+        'status' => 'סטטוס',
+    ],
+    'priorities' => [
+        'low' => 'נמוכה',
+        'normal' => 'רגילה',
+        'high' => 'גבוהה',
+        'urgent' => 'דחופה',
+    ],
+    'statuses' => [
+        'open' => 'פתוחה',
+        'in_progress' => 'בטיפול',
+        'done' => 'בוצעה',
+        'cancelled' => 'בוטלה',
+    ],
+    'due' => 'תאריך יעד',
+    'board' => 'לוח משימות',
+    'list' => 'רשימה',
+    'show' => 'הצגה',
+    'only_mine' => 'רק המשימות שלי',
+    'overdue' => 'באיחור',
+    'notify_assigned' => 'שויכה אליך משימה: :title',
+    'notify_overdue' => 'משימה באיחור: :title',
+    'assigned_by' => 'נוצרה על ידי',
+    'from_meeting' => 'לישיבה שבה הוחלט',
+    'no_description' => 'אין פירוט.',
+    'comments' => 'הערות',
+    'comment_fields' => [
+        'body' => 'הערה חדשה',
+    ],
+    'add_comment' => 'הוספת הערה',
+    'update_status' => 'עדכון סטטוס',
+    'board_all' => 'כל המשימות בבית הספר (לוח הנהלה).',
+    'board_mine' => 'המשימות שלי ואלה שיצרתי.',
+];

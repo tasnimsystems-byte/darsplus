@@ -1,0 +1,10 @@
+# Safety net for hosts where the document root cannot point at /public:
+# every request is routed into /public and nothing else is reachable.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ public/ [L]
+    RewriteRule (.*) public/$1 [L]
+</IfModule>
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
