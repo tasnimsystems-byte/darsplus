@@ -20,6 +20,9 @@ $totalHours = array_sum(array_map(static fn ($a) => (float) $a['weekly_hours'], 
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <?php if ($assignments !== [] && can('structure.view')): ?>
+            <a class="btn btn-outline-primary" href="<?= e(url('/timetable?view=teacher&id=' . $id)) ?>"><i class="bi bi-table" aria-hidden="true"></i> <?= e(__('timetable.title')) ?></a>
+        <?php endif; ?>
         <?php if (can('staff_dev.view')): ?>
             <a class="btn btn-outline-primary" href="<?= e(url("/staff-development/$id")) ?>"><i class="bi bi-award" aria-hidden="true"></i> <?= e(__('staffdev.title')) ?></a>
         <?php endif; ?>

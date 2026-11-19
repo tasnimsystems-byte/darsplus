@@ -85,8 +85,12 @@ final class SecurityTest extends TestCase
         $this->post("/tasks/$task/comments", ['body' => $name]);
         $db->insert('notifications', ['user_id' => $this->principal, 'school_id' => $this->school, 'type' => 't', 'title' => $name, 'body' => $name, 'link' => 'javascript:alert(1)']);
 
+        $db->insert('timetable_periods', ['school_id' => $this->school, 'academic_year_id' => $this->year, 'period_number' => 1, 'name' => mb_substr($name, 0, 60), 'start_time' => '08:00', 'end_time' => '08:45']);
+        $db->insert('timetable_slots', ['school_id' => $this->school, 'academic_year_id' => $this->year, 'teaching_assignment_id' => $this->mathA, 'weekday' => (int) date('w'), 'period_number' => 1]);
+        $db->insert('timetable_imports', ['school_id' => $this->school, 'academic_year_id' => $this->year, 'source_name' => $name, 'summary' => json_encode(['project' => $name])]);
+
         $s = $this->s[1];
-        return ['/', '/notifications', '/students', "/students/$s", "/students/$s/edit", '/teachers', "/teachers/$teacher", '/classes', "/classes/{$this->classA}",
+        return ['/timetable', '/timetable/import', '/', '/notifications', '/students', "/students/$s", "/students/$s/edit", '/teachers', "/teachers/$teacher", '/classes', "/classes/{$this->classA}",
             '/subjects', '/users', "/users/{$this->mathUser}/edit", "/users/{$this->mathUser}/scopes", '/schools', '/audit',
             '/work-plan', '/goals', "/goals/$goal", "/goals/$goal/edit", '/curriculum', "/curriculum/$plan", "/curriculum/$plan?view=week",
             "/curriculum/$plan/progress/{$this->mathA}", '/assessments', "/assessments/$assessment", '/achievements', "/achievements?class_id={$this->classA}",

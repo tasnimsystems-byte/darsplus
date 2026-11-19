@@ -46,7 +46,33 @@ $display = static function (array $field, mixed $value): string {
     <div class="alert alert-secondary" role="note"><i class="bi bi-lock" aria-hidden="true"></i> <?= e(__('app.errors.year_locked')) ?></div>
 <?php endif; ?>
 
-<?php if ($def['search'] !== [] || $def['filters'] !== []): ?>
+<?php if (!empty($def['floatFilters']) && ($def['search'] !== [] || $def['filters'] !== [])): ?>
+    <form class="filter-bar mb-3" method="get" action="<?= e(url($def['path'])) ?>" role="search">
+        <?php if ($def['search'] !== []): ?>
+            <div class="ff ff-search">
+                <input class="form-control" type="search" id="q" name="q" maxlength="100" value="<?= e($search) ?>" placeholder="<?= e(__('app.search')) ?>">
+                <label class="ff-label" for="q"><?= e(__('app.search')) ?></label>
+            </div>
+        <?php endif; ?>
+        <?php foreach ($def['filters'] as $name => $filter): ?>
+            <div class="ff">
+                <select class="form-select js-autosubmit" id="filter-<?= e($name) ?>" name="<?= e($name) ?>">
+                    <option value=""><?= e(__($filter['label'])) ?></option>
+                    <?php foreach ($filter['options'] as $value => $label): ?>
+                        <option value="<?= e($value) ?>"<?= ($activeFilters[$name] ?? '') === (string) $value ? ' selected' : '' ?>><?= e($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <label class="ff-label" for="filter-<?= e($name) ?>"><?= e(__($filter['label'])) ?></label>
+            </div>
+        <?php endforeach; ?>
+        <div class="filter-bar-actions">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> <?= e(__('app.filter')) ?></button>
+            <?php if ($search !== '' || $activeFilters !== []): ?>
+                <a class="btn btn-link" href="<?= e(url($def['path'])) ?>"><?= e(__('app.clear')) ?></a>
+            <?php endif; ?>
+        </div>
+    </form>
+<?php elseif ($def['search'] !== [] || $def['filters'] !== []): ?>
     <form class="row g-2 mb-3 align-items-end" method="get" action="<?= e(url($def['path'])) ?>" role="search">
         <?php if ($def['search'] !== []): ?>
             <div class="col-12 col-md-4">
@@ -76,7 +102,7 @@ $display = static function (array $field, mixed $value): string {
 
 <div class="card">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 table-stack">
             <caption class="visually-hidden"><?= e(__("$lang.title")) ?></caption>
             <thead>
             <tr>
@@ -91,7 +117,19 @@ $display = static function (array $field, mixed $value): string {
             </thead>
             <tbody>
             <?php if ($rows === []): ?>
-                <tr><td colspan="<?= count($columns) + count($def['listExtra']) + 1 ?>" class="text-center text-secondary py-4"><?= e(__('app.none')) ?></td></tr>
+                <tr>
+                    <td colspan="<?= count($columns) + count($def['listExtra']) + 1 ?>" class="table-stack-empty p-0">
+                        <div class="empty-state">
+                            <i class="bi bi-<?= ($search !== '' || $activeFilters !== []) ? 'search' : 'inbox' ?>" aria-hidden="true"></i>
+                            <p class="mb-1"><?= e(__(($search !== '' || $activeFilters !== []) ? 'app.none_filtered' : 'app.none')) ?></p>
+                            <?php if ($search !== '' || $activeFilters !== []): ?>
+                                <a class="btn btn-sm btn-outline-secondary" href="<?= e(url($def['path'])) ?>"><?= e(__('app.clear')) ?></a>
+                            <?php elseif (!$readOnly && can("$module.create")): ?>
+                                <a class="btn btn-sm btn-primary" href="<?= e(url($def['path'] . '/create')) ?>"><i class="bi bi-plus-lg" aria-hidden="true"></i> <?= e(__("$lang.add")) ?></a>
+                            <?php endif; ?>
+                        </div>
+                    </td>
+                </tr>
             <?php endif; ?>
             <?php foreach ($rows as $row): ?>
                 <?php $id = (int) $row['id']; $name = $rowName($row); $first = true; ?>
@@ -106,14 +144,14 @@ $display = static function (array $field, mixed $value): string {
                                 <?php endif; ?>
                             </th>
                         <?php else: ?>
-                            <td><?= e($display($field, $row[$column])) ?></td>
+                            <td data-label="<?= e(__("$lang.fields.$column")) ?>"><?= e($display($field, $row[$column])) ?></td>
                         <?php endif; ?>
                     <?php endforeach; ?>
-                    <?php foreach (array_keys($def['listExtra']) as $column): ?>
-                        <td><?= e($row[$column] ?? '—') ?></td>
+                    <?php foreach ($def['listExtra'] as $column => $label): ?>
+                        <td data-label="<?= e(__($label)) ?>"><?= e($row[$column] ?? '—') ?></td>
                     <?php endforeach; ?>
                     <?php if ($actionCount > 0): ?>
-                        <td class="text-end text-nowrap">
+                        <td class="text-end text-nowrap table-stack-actions">
                             <?php foreach ($def['rowActions'] as $action): ?>
                                 <?php if (can($action['permission']) && ($action['when'])($row)): ?>
                                     <form class="d-inline" method="post" action="<?= e(url(str_replace('{id}', (string) $id, $action['path']))) ?>"

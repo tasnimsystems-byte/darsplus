@@ -17,7 +17,10 @@ final class ProfileController extends Controller
 {
     public function showPassword(Request $request): Response
     {
-        return $this->view('auth/password', ['forced' => (bool) $this->auth()->user()['must_change_password']], 'layouts/auth');
+        return $this->view('auth/password', [
+            'forced' => (bool) $this->auth()->user()['must_change_password'],
+            'ssoLinkedAt' => $this->db()->value('SELECT sso_linked_at FROM users WHERE id = ?', [$this->auth()->id()]),
+        ], 'layouts/auth');
     }
 
     public function updatePassword(Request $request): Response
@@ -64,6 +67,17 @@ final class ProfileController extends Controller
     }
 
     /** Language switch — available before login too, so it is not behind authentication. */
+    /** Colour mode of the signed-in user: auto (the device decides), light or dark. */
+    public function theme(Request $request): Response
+    {
+        $theme = $request->str('theme');
+        if (in_array($theme, ['auto', 'light', 'dark'], true)) {
+            (new UserRepository($this->db()))->update((int) $this->auth()->id(), ['theme' => $theme]);
+        }
+        $back = $request->str('back');
+        return Response::redirect(preg_match('#^/[A-Za-z0-9/_-]*$#', $back) ? $back : '/');
+    }
+
     public function locale(Request $request): Response
     {
         $locale = $request->str('locale');

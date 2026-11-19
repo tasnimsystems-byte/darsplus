@@ -58,6 +58,21 @@ $canSwitch = count($auth->availableSchools()) > 1;
             <noscript><button class="btn btn-sm btn-light" type="submit"><?= e(__('app.change_language')) ?></button></noscript>
         </form>
 
+        <?php
+        $theme = ui_theme();
+        $nextTheme = ['auto' => 'light', 'light' => 'dark', 'dark' => 'auto'][$theme];
+        $themeIcon = ['auto' => 'circle-half', 'light' => 'sun', 'dark' => 'moon-stars'][$theme];
+        ?>
+        <form method="post" action="<?= e(url('/theme')) ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="back" value="<?= e((string) View::shared('path')) ?>">
+            <button class="btn btn-light" type="submit" name="theme" value="<?= e($nextTheme) ?>"
+                    title="<?= e(__('app.theme.current', ['mode' => __('app.theme.' . $theme)])) ?>"
+                    aria-label="<?= e(__('app.theme.switch', ['mode' => __('app.theme.' . $theme), 'next' => __('app.theme.' . $nextTheme)])) ?>">
+                <i class="bi bi-<?= e($themeIcon) ?>" aria-hidden="true"></i>
+            </button>
+        </form>
+
         <a class="btn btn-light position-relative" href="<?= e(url('/notifications')) ?>"
            aria-label="<?= e(__('nav.notifications_count', ['count' => $unread])) ?>">
             <i class="bi bi-bell" aria-hidden="true"></i>

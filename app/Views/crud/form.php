@@ -68,6 +68,10 @@ $required = static fn (array $field): bool => in_array('required', is_array($fie
                 <?php endif; ?>
             <?php endforeach; ?>
 
+            <?php if (isset($extraView)): ?>
+                <?= View::partial($extraView, $extraData ?? []) ?>
+            <?php endif; ?>
+
             <div class="d-flex gap-2">
                 <button class="btn btn-primary" type="submit"><?= e(__('app.save')) ?></button>
                 <a class="btn btn-outline-secondary" href="<?= e(url($def['path'])) ?>"><?= e(__('app.cancel')) ?></a>

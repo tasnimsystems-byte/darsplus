@@ -15,6 +15,7 @@ $canEdit = can('structure.update') && !$readOnly;
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" href="<?= e(url('/timetable?view=class&id=' . $id)) ?>"><i class="bi bi-table" aria-hidden="true"></i> <?= e(__('timetable.title')) ?></a>
         <?php if ($canEdit): ?>
             <a class="btn btn-outline-primary" href="<?= e(url("/classes/$id/edit")) ?>"><i class="bi bi-pencil" aria-hidden="true"></i> <?= e(__('classes.edit')) ?></a>
         <?php endif; ?>

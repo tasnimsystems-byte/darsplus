@@ -17,6 +17,7 @@ final class SubjectController extends CrudController
             'fields' => [
                 'name' => ['rules' => 'required|max:100', 'list' => true, 'attrs' => 'maxlength="100"'],
                 'code' => ['rules' => 'max:20', 'list' => true, 'attrs' => 'maxlength="20" dir="ltr"'],
+                'is_graded' => ['type' => 'checkbox', 'list' => true, 'default' => 1, 'help' => 'subjects.is_graded_help'],
                 'is_active' => ['type' => 'checkbox', 'list' => true, 'default' => 1],
             ],
         ];

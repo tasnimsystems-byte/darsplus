@@ -175,7 +175,7 @@ final class RoleAndSchoolTest extends TestCase
             foreach ($pages as $page) {
                 $response = $this->get($page);
                 self::assertSame(200, $response->status, "$locale $page");
-                self::assertStringContainsString('<html lang="' . $locale . '" dir="rtl">', $response->body);
+                self::assertStringContainsString('<html lang="' . $locale . '" dir="rtl" ', $response->body);
                 // An untranslated key would show up as "file.key" text between tags.
                 self::assertDoesNotMatchRegularExpression('/>\s*(app|nav|auth|users|roles|schools|audit|documents|dashboard|errors|notifications|validation|permissions)\.[a-z_.]+\s*</', $response->body, "$locale $page shows a raw key");
             }

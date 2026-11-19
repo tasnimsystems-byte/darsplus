@@ -208,7 +208,7 @@ final class AuthTest extends TestCase
         $this->assertRedirect('/', $this->post('/locale', ['locale' => 'ar', 'back' => 'https://evil.example/']));
         self::assertSame('ar', App::db()->value('SELECT locale FROM users WHERE id = ?', [$id]));
         $body = $this->get('/')->body;
-        self::assertStringContainsString('<html lang="ar" dir="rtl">', $body);
+        self::assertStringContainsString('<html lang="ar" dir="rtl" ', $body);
         self::assertStringContainsString('لوحة المتابعة', $body);
 
         $this->post('/locale', ['locale' => 'xx']);

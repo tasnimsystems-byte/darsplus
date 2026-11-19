@@ -140,6 +140,42 @@ final class ImportAndTransitionTest extends TestCase
         self::assertSame('=1+1', App::db()->value("SELECT first_name FROM students WHERE last_name LIKE '=HYPERLINK%'"));
     }
 
+    public function testExportWithTitleRowsDiacriticsAndIdColumn(): void
+    {
+        $this->createClass($this->school, $this->year, $this->level7, 'السابع 1');
+        $csv = implode("\n", [
+            'التلميذ,,,,,,,الاب,الام',
+            'تفاصيل أساسيّة,,,,,,تفاصيل الاتصال,تفاصيل الاتصال,تفاصيل الاتصال',
+            'رقم الهويّة,الاسم الشخصيّ بالعربيّة,اسم الاب باللغة العربية,اسم العائلة بالعربيّة,اسم الصف بالعربي, ,رقم المحمول 1,رقم المحمول 1,رقم المحمول 1',
+            '000000018,ليلى,سامي,الخطيب,السّابع (1),,050-0000001,050-0000002,050-0000003',
+            '000000026,عمر,خالد,النجار,السّابع (1),,,050-0000004,',
+        ]);
+        $response = $this->uploadImport('export.csv', $csv);
+        self::assertSame(200, $response->status);
+        self::assertStringContainsString('رقم الهويّة', $response->body, 'The skipped ID column is named in the preview.');
+
+        $this->post('/students/import/confirm');
+        $students = App::db()->all("SELECT * FROM students WHERE last_name IN ('الخطيب', 'النجار') ORDER BY last_name");
+        self::assertCount(2, $students);
+        $class = (int) App::db()->value("SELECT id FROM classes WHERE name = 'السابع 1'");
+        foreach ($students as $student) {
+            self::assertSame($class, (int) App::db()->value('SELECT class_id FROM class_enrollments WHERE student_id = ?', [$student['id']]), '"السّابع (1)" matches the class "السابع 1".');
+            self::assertMatchesRegularExpression('/^S\d{5}$/', $student['student_code'], 'An internal code, never the ID number.');
+        }
+        $stored = json_encode(App::db()->all('SELECT * FROM students'), JSON_UNESCAPED_UNICODE) . json_encode(App::db()->all('SELECT new_values FROM audit_logs'), JSON_UNESCAPED_UNICODE);
+        foreach (['000000018', '050-0000001', '050-0000004', 'سامي'] as $notStored) {
+            self::assertStringNotContainsString($notStored, $stored);
+        }
+    }
+
+    public function testNormalisation(): void
+    {
+        self::assertSame(StudentImportService::normalize('السابع 1'), StudentImportService::normalize('السّابع (1)'));
+        self::assertSame(StudentImportService::normalize('ז1'), StudentImportService::normalize("ז'1"));
+        self::assertSame(StudentImportService::normalize('الاسم الشخصي بالعربية'), StudentImportService::normalize('الاسم الشخصيّ بالعربيّة'));
+        self::assertNotSame(StudentImportService::normalize('ז1'), StudentImportService::normalize('ז2'));
+    }
+
     public function testDateParsing(): void
     {
         self::assertSame('2013-04-02', StudentImportService::parseDate('2013-04-02'));

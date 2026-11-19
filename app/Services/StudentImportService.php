@@ -15,14 +15,35 @@ use App\Core\Database;
 final class StudentImportService
 {
     /** Accepted column headings (lower-cased) in English, Hebrew and Arabic. */
+    /**
+     * Accepted column headings, compared after normalize() (so "الاسم الشخصيّ بالعربيّة"
+     * matches "الاسم الشخصي بالعربية"). Includes the column names of common exports from
+     * the school administration systems.
+     */
     private const HEADERS = [
         'student_code' => ['student_code', 'code', 'קוד', 'קוד תלמיד', 'מספר תלמיד', 'رمز الطالب', 'الرمز'],
-        'first_name' => ['first_name', 'first name', 'שם פרטי', 'الاسم الشخصي', 'الاسم'],
-        'last_name' => ['last_name', 'last name', 'שם משפחה', 'اسم العائلة', 'العائلة'],
+        'first_name' => ['first_name', 'first name', 'שם פרטי', 'שם פרטי בעברית', 'الاسم الشخصي', 'الاسم', 'الاسم الشخصي بالعربية'],
+        'last_name' => ['last_name', 'last name', 'שם משפחה', 'שם משפחה בעברית', 'اسم العائلة', 'العائلة', 'اسم العائلة بالعربية'],
         'gender' => ['gender', 'מין', 'מגדר', 'الجنس'],
         'birth_date' => ['birth_date', 'birth date', 'תאריך לידה', 'تاريخ الميلاد'],
-        'class' => ['class', 'כיתה', 'الصف'],
+        'class' => ['class', 'כיתה', 'שם כיתה', 'الصف', 'اسم الصف', 'اسم الصف بالعربي', 'اسم الصف بالعربية'],
     ];
+
+    /** How many rows from the top may hold titles above the real heading row. */
+    private const HEADER_SEARCH_ROWS = 6;
+
+    /**
+     * For comparing headings and class names: lower case, no diacritics (shadda, nikud…),
+     * no tatweel, and none of the punctuation that differs between exports — so
+     * "السّابع (1)" equals "السابع 1" and "ז'1" equals "ז1".
+     */
+    public static function normalize(string $text): string
+    {
+        $text = mb_strtolower(trim($text));
+        $text = (string) preg_replace('/[\p{Mn}\x{0640}]/u', '', $text);
+        $text = (string) preg_replace('/[()\[\]\'"׳״`´\.\-_\/\\\\]/u', ' ', $text);
+        return (string) preg_replace('/\s+/u', '', $text);
+    }
 
     private const GENDERS = [
         'm' => 'm', 'male' => 'm', 'ז' => 'm', 'זכר' => 'm', 'בן' => 'm', 'ذكر' => 'm',
@@ -36,27 +57,51 @@ final class StudentImportService
     /**
      * @param array<int, string[]> $rows        first row = headings
      * @param array<int, string>   $classes     class id => name, the classes this user may enrol into
-     * @return array{rows: array, counts: array{ok: int, error: int, exists: int}}
+     * @return array{rows: array, counts: array{ok: int, error: int, exists: int}, ignored: string[]}
      */
     public function analyse(array $rows, int $schoolId, array $classes): array
     {
-        $map = [];
-        foreach (array_shift($rows) as $index => $heading) {
-            $heading = mb_strtolower(trim($heading));
-            foreach (self::HEADERS as $field => $aliases) {
-                if (in_array($heading, $aliases, true)) {
-                    $map[$field] ??= $index;
-                }
+        // The heading row is the first of the top rows that names both first and last name;
+        // title rows above it (as in many exports) are skipped.
+        $aliases = [];
+        foreach (self::HEADERS as $field => $names) {
+            foreach ($names as $name) {
+                $aliases[self::normalize($name)] = $field;
             }
         }
-        if (!isset($map['first_name'], $map['last_name'])) {
+        $map = [];
+        $headingRow = null;
+        foreach (array_slice($rows, 0, self::HEADER_SEARCH_ROWS) as $position => $candidate) {
+            $found = [];
+            foreach ($candidate as $index => $heading) {
+                $field = $aliases[self::normalize((string) $heading)] ?? null;
+                if ($field !== null) {
+                    $found[$field] ??= $index;
+                }
+            }
+            if (isset($found['first_name'], $found['last_name'])) {
+                [$map, $headingRow] = [$found, $position];
+                break;
+            }
+        }
+        if ($headingRow === null) {
             throw new \DomainException('students.import.errors.headers');
         }
+        // Columns that are present but not read (for example an ID number) are listed, so it is
+        // visible that they were left out — they are never stored.
+        $ignored = [];
+        foreach ($rows[$headingRow] as $index => $heading) {
+            if (trim((string) $heading) !== '' && !in_array($index, $map, true)) {
+                $ignored[] = trim((string) $heading);
+            }
+        }
+        $firstLine = $headingRow + 2;
+        $rows = array_slice($rows, $headingRow + 1);
 
         $existing = array_flip(array_map('strtolower', $this->db->column('SELECT student_code FROM students WHERE school_id = ?', [$schoolId])));
         $classIds = [];
         foreach ($classes as $id => $name) {
-            $classIds[mb_strtolower(trim($name))] = (int) $id;
+            $classIds[self::normalize($name)] = (int) $id;
         }
 
         $result = [];
@@ -99,7 +144,7 @@ final class StudentImportService
                 }
             }
             if ($data['class'] !== '') {
-                $data['class_id'] = $classIds[mb_strtolower($data['class'])] ?? null;
+                $data['class_id'] = $classIds[self::normalize($data['class'])] ?? null;
                 if ($data['class_id'] === null) {
                     $errors[] = 'students.import.row_errors.class';
                 }
@@ -108,9 +153,9 @@ final class StudentImportService
             $status = $errors !== [] ? 'error'
                 : ($data['student_code'] !== '' && isset($existing[strtolower($data['student_code'])]) ? 'exists' : 'ok');
             $counts[$status]++;
-            $result[] = ['line' => $i + 2, 'data' => $data, 'errors' => $errors, 'status' => $status];
+            $result[] = ['line' => $i + $firstLine, 'data' => $data, 'errors' => $errors, 'status' => $status];
         }
-        return ['rows' => $result, 'counts' => $counts];
+        return ['rows' => $result, 'counts' => $counts, 'ignored' => array_values(array_unique($ignored))];
     }
 
     /** @return int number of students created */

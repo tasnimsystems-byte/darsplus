@@ -1,12 +1,21 @@
 <?php
 
 return [
-    'name' => 'نظام الإدارة التربوية',
+    'name' => 'درس بلاس',
+    'made_by' => 'تطوير :vendor',
+    'rights_reserved' => 'كل الحقوق محفوظة',
     'skip_to_content' => 'انتقل إلى المحتوى الرئيسي',
     'close' => 'إغلاق',
     'main_nav' => 'القائمة الرئيسية',
     'open_menu' => 'فتح القائمة',
     'language' => 'لغة الواجهة',
+    'theme' => [
+        'auto' => 'تلقائي (حسب الجهاز)',
+        'light' => 'فاتح',
+        'dark' => 'داكن',
+        'current' => 'المظهر: :mode',
+        'switch' => 'المظهر الحالي: :mode. التبديل إلى: :next',
+    ],
     'change_language' => 'تغيير اللغة',
     'confirm_title' => 'تأكيد العملية',
     'confirm' => 'تأكيد',
@@ -17,6 +26,7 @@ return [
     'clear' => 'مسح',
     'actions' => 'إجراءات',
     'none' => 'لا توجد سجلات',
+    'none_filtered' => 'لا توجد نتائج مطابقة للبحث أو التصفية.',
     'active' => 'فعّال',
     'inactive' => 'غير فعّال',
     'total' => 'المجموع: :count سجلات',

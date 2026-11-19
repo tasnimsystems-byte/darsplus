@@ -15,8 +15,15 @@ final class AuthorizationTest extends TestCase
         'GET /password', 'POST /password', 'GET /select-school', 'POST /select-school',
         'GET /notifications', 'POST /notifications/read-all', 'POST /notifications/{id}/read',
         'POST /year', // choosing among the school's own years
+        'POST /theme', // the user's own colour mode
+        'GET /', // the dashboard checks dashboard.view itself; portal users are sent to /me
+        'POST /auth/sso/unlink', // the user's own link to the Ministry sign-in
+        'GET /auth/sso', 'GET /auth/sso/callback', // the Ministry sign-in itself (404 while not configured)
         // Deleting is decided per document (uploader or documents.delete) inside the controller.
         'POST /documents/{id}/delete',
+        // An online lesson is entered by staff (attendance.view) and by students (portal.view):
+        // OnlineLessons::access() decides per meeting who enters, and as what.
+        'GET /online/{id}', 'POST /online/{id}/token',
     ];
 
     public function testEveryRouteDeclaresAPermissionUnlessExplicitlyListed(): void
@@ -37,7 +44,7 @@ final class AuthorizationTest extends TestCase
         foreach ($this->router->routes() as $route) {
             $path = preg_replace('/\{\w+\}/', '1', $route['path']);
             $response = $route['method'] === 'GET' ? $this->get($path) : $this->post($path);
-            if (in_array($route['path'], ['/login', '/locale'], true)) {
+            if (in_array($route['path'], ['/login', '/locale', '/auth/sso', '/auth/sso/callback'], true)) {
                 continue;
             }
             $this->assertRedirect('/login', $response);

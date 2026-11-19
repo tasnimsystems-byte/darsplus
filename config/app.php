@@ -5,7 +5,14 @@ declare(strict_types=1);
 $env = (string) env('APP_ENV', 'production');
 
 return [
-    'name' => 'SPMS',
+    'name' => 'DarsPlus',
+
+    // The maker of DarsPlus, shown at the foot of every page.
+    'vendor' => [
+        'name' => 'أنظمة تسنيم للحاسوب',
+        'email' => 'tasnimsystems@gmail.com',
+        'phone' => '0547297817',
+    ],
     'env' => $env,
     'debug' => (bool) env('APP_DEBUG', false),
     // Set when the application is served from a sub-directory, e.g. "/spms".

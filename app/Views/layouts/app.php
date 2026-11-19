@@ -5,13 +5,16 @@ use App\Core\View;
 $title = View::shared('title');
 ?>
 <!doctype html>
-<html lang="<?= e(App::lang()->locale()) ?>" dir="<?= e(App::lang()->direction()) ?>">
+<html <?= html_attributes() ?>>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ? $title . ' · ' : '') . __('app.name')) ?></title>
+    <script src="<?= e(asset('js/theme.js')) ?>"></script>
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/bootstrap.rtl.min.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/fonts.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/tokens.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body>
@@ -24,6 +27,7 @@ $title = View::shared('title');
             <?= View::partial('partials/flash') ?>
             <?= $content ?>
         </main>
+        <?= View::partial('partials/footer') ?>
     </div>
 </div>
 <?= View::partial('partials/confirm-modal') ?>

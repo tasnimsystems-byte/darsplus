@@ -20,7 +20,7 @@ return [
         'structure', 'students', 'teachers',
         'work_plan', 'curriculum', 'assessments', 'attendance', 'risk', 'interventions',
         'staff_dev', 'observations', 'meetings', 'tasks', 'parent_contacts',
-        'documents', 'reports',
+        'documents', 'reports', 'portal',
     ],
 
     'roles' => [
@@ -93,5 +93,9 @@ return [
         'viewer' => ['level' => 'school', 'grants' => [
             'dashboard' => 'v', 'work_plan' => 'v', 'reports' => 'v',
         ]],
+
+        // Portal: their own data only (App\Services\Portal), nothing of the staff modules.
+        'student' => ['level' => 'school', 'grants' => ['portal' => 'v']],
+        'parent' => ['level' => 'school', 'grants' => ['portal' => 'v']],
     ],
 ];

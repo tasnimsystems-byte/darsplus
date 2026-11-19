@@ -6,24 +6,28 @@ use App\Core\View;
 $title = View::shared('title');
 ?>
 <!doctype html>
-<html lang="<?= e(App::lang()->locale()) ?>" dir="<?= e(App::lang()->direction()) ?>">
+<html <?= html_attributes() ?>>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ? $title . ' · ' : '') . __('app.name')) ?></title>
+    <script src="<?= e(asset('js/theme.js')) ?>"></script>
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/bootstrap.rtl.min.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/fonts.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('css/tokens.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body class="auth-body">
 <main class="auth-wrap" id="main">
     <div class="auth-brand">
         <i class="bi bi-mortarboard" aria-hidden="true"></i>
-        <span><?= e(__('app.name')) ?></span>
+        <span class="app-brand-name"><?= e(__('app.name')) ?>
+            <small><?= App::lang()->locale() === 'ar' ? 'DarsPlus' : 'درس بلاس' ?></small></span>
     </div>
     <div class="card auth-card">
         <div class="card-body">
-            <?= View::partial('partials/flash') ?>
+            <?= View::partial('partials/flash', ['inline' => true]) ?>
             <?= $content ?>
         </div>
     </div>
@@ -39,6 +43,7 @@ $title = View::shared('title');
             <?php endforeach; ?>
         </div>
     </form>
+    <?= View::partial('partials/footer') ?>
 </main>
 <script src="<?= e(asset('vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
 <script src="<?= e(asset('js/app.js')) ?>"></script>

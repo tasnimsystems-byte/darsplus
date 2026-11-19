@@ -1,0 +1,11 @@
+Fonts in this folder
+
+  Rubik – Copyright 2015 The Rubik Project Authors (Hebrew and Latin)
+  Tajawal – Copyright 2018 Boutros International (Arabic and Latin)
+
+Both are licensed under the SIL Open Font License, Version 1.1:
+https://openfontlicense.org/open-font-license-official-text/
+
+They are served from this application (not from a CDN) so that the
+Content-Security-Policy can stay "font-src 'self'" and pages work offline.
+Files: woff2 subsets (hebrew / arabic / latin) as published by Google Fonts.

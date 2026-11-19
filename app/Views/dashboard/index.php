@@ -17,6 +17,10 @@ View::share('title', __('nav.dashboard'));
     <?php endif; ?>
 </div>
 
+<?php if ($myWeek !== null): ?>
+    <?= View::partial('dashboard/my_week', ['week' => $myWeek]) ?>
+<?php endif; ?>
+
 <?php if ($options !== []): ?>
     <form class="card card-body mb-4" method="get" action="<?= e(url('/')) ?>">
         <div class="row g-2 align-items-end">
@@ -44,8 +48,13 @@ View::share('title', __('nav.dashboard'));
     <h2 class="h6 text-secondary mb-2"><?= e(__($heading)) ?></h2>
     <div class="row g-3 mb-4">
         <?php foreach ($cards as $card): ?>
+            <?php
+            // A regular teacher's menu has no students or classes list (D78), so those cards are figures, not links.
+            $linked = !(preg_match('#^/(students|classes)(\?|$)#', $card['link']) && is_regular_teacher());
+            $tag = $linked ? 'a' : 'div';
+            ?>
             <div class="col-12 col-sm-6 col-xl-3">
-                <a class="card kpi-card h-100" href="<?= e(url($card['link'])) ?>">
+                <<?= $tag ?> class="card kpi-card h-100<?= $linked ? '' : ' kpi-static' ?>"<?= $linked ? ' href="' . e(url($card['link'])) . '"' : '' ?>>
                     <div class="card-body">
                         <div class="kpi-icon"><i class="bi bi-<?= e($card['icon']) ?>" aria-hidden="true"></i></div>
                         <div>
@@ -53,7 +62,7 @@ View::share('title', __('nav.dashboard'));
                             <div class="kpi-label"><?= e(__($card['label'])) ?></div>
                         </div>
                     </div>
-                </a>
+                </<?= $tag ?>>
             </div>
         <?php endforeach; ?>
     </div>

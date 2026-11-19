@@ -36,3 +36,18 @@ View::share('title', __('auth.change_password_title'));
         <button class="btn btn-link p-0" type="submit"><?= e(__('nav.logout')) ?></button>
     </form>
 <?php endif; ?>
+<?php if (\App\Services\OidcClient::enabled() || ($ssoLinkedAt ?? null) !== null): ?>
+    <section class="mt-4 pt-3 border-top" aria-labelledby="sso-title">
+        <h2 class="h6" id="sso-title"><i class="bi bi-shield-lock" aria-hidden="true"></i> <?= e(__('auth.sso.title')) ?></h2>
+        <?php if (($ssoLinkedAt ?? null) !== null): ?>
+            <p class="small mb-2"><?= e(__('auth.sso.is_linked', ['date' => date('d/m/Y', strtotime($ssoLinkedAt))])) ?></p>
+            <form method="post" action="<?= e(url('/auth/sso/unlink')) ?>" data-confirm="<?= e(__('auth.sso.unlink_confirm')) ?>">
+                <?= csrf_field() ?>
+                <button class="btn btn-sm btn-outline-danger" type="submit"><?= e(__('auth.sso.unlink')) ?></button>
+            </form>
+        <?php else: ?>
+            <p class="small text-secondary mb-2"><?= e(__('auth.sso.link_help')) ?></p>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/auth/sso?link=1')) ?>"><?= e(__('auth.sso.link')) ?></a>
+        <?php endif; ?>
+    </section>
+<?php endif; ?>

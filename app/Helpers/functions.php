@@ -35,9 +35,12 @@ function url(string $path = ''): string
     return rtrim((string) App::config('app.base_path', ''), '/') . '/' . ltrim($path, '/');
 }
 
+/** URL of a public asset; the file's modification time is appended so browsers fetch a new version after an update. */
 function asset(string $path): string
 {
-    return url('assets/' . ltrim($path, '/'));
+    $path = ltrim($path, '/');
+    $file = App::root('public/assets/' . $path);
+    return url('assets/' . $path) . (is_file($file) ? '?v=' . filemtime($file) : '');
 }
 
 function csrf_field(): string
@@ -101,4 +104,65 @@ function trans_or(string $key, string $fallback): string
 function format_hours(mixed $hours): string
 {
     return $hours === null || $hours === '' ? '—' : rtrim(rtrim(number_format((float) $hours, 1, '.', ''), '0'), '.');
+}
+
+/** The user's colour mode: 'auto' (follow the device), 'light' or 'dark'. Guests follow the device. */
+function ui_theme(): string
+{
+    $theme = (string) (\App\Core\App::auth()->user()['theme'] ?? 'auto');
+    return in_array($theme, ['auto', 'light', 'dark'], true) ? $theme : 'auto';
+}
+
+/**
+ * Which design the user gets: 'staff' (teachers and management), 'teen' (students of grades 7–12)
+ * or 'junior' (students of grades 1–6). Every account today is a staff account; the student themes
+ * are ready in tokens.css for a student portal.
+ */
+function ui_audience(): string
+{
+    $auth = \App\Core\App::auth();
+    if (!$auth->check() || $auth->schoolId() === null || $auth->can('dashboard.view') || !$auth->can('portal.view')) {
+        return 'staff';
+    }
+    $db = \App\Core\App::db();
+    if (\App\Services\Portal::isParent($db, $auth)) {
+        return 'teen';
+    }
+    $student = \App\Services\Portal::current($db, $auth);
+    return $student !== null && $student['level_number'] !== null && (int) $student['level_number'] <= 6 ? 'junior' : 'teen';
+}
+
+/** Attributes of <html>: language, direction, design and colour mode (the server's best guess; theme.js refines "auto"). */
+function html_attributes(): string
+{
+    $lang = \App\Core\App::lang();
+    $theme = ui_theme();
+    return 'lang="' . e($lang->locale()) . '" dir="' . e($lang->direction()) . '" data-audience="' . e(ui_audience())
+        . '" data-theme-pref="' . e($theme) . '" data-bs-theme="' . ($theme === 'dark' ? 'dark' : 'light') . '"';
+}
+
+/**
+ * A "regular" teacher: sees only what they teach – not the whole school, not homeroom teacher of a
+ * class this year, no coordinator position and no extra scope given by hand. Their menu leaves out the
+ * school-wide lists (students, classes); the pages themselves stay reachable from their lessons.
+ */
+function is_regular_teacher(): bool
+{
+    $auth = \App\Core\App::auth();
+    $userId = (int) $auth->id();
+    $schoolId = (int) $auth->schoolId();
+    $yearId = (int) ($auth->year()['id'] ?? 0);
+    $db = \App\Core\App::db();
+    if ($userId === 0 || (new \App\Services\AccessScope($db, $auth))->isUnrestricted()) {
+        return false;
+    }
+    $mine = 'SELECT t.id FROM teachers t WHERE t.user_id = ? AND t.school_id = ? AND t.deleted_at IS NULL';
+    $wider = $db->value(
+        "SELECT 1 FROM classes c WHERE c.school_id = ? AND c.academic_year_id = ? AND c.homeroom_teacher_id IN ($mine)
+         UNION SELECT 1 FROM staff_positions sp WHERE sp.school_id = ? AND sp.academic_year_id = ? AND sp.teacher_id IN ($mine)
+         UNION SELECT 1 FROM user_scopes us WHERE us.user_id = ? AND us.school_id = ?
+         LIMIT 1",
+        [$schoolId, $yearId, $userId, $schoolId, $schoolId, $yearId, $userId, $schoolId, $userId, $schoolId]
+    );
+    return $wider === null;
 }

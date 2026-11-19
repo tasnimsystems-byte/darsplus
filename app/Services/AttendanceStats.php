@@ -10,8 +10,8 @@ use App\Core\Database;
  * Attendance figures from per-lesson records. Only exceptions are stored
  * (absent / justified / late), so presence = held lessons minus exceptions.
  * The expected attendance of a lesson is the number of students currently
- * enrolled in its class — an approximation for classes whose roster changed
- * during the period, and for subjects taught in split groups.
+ * enrolled in its class, or for a lesson linked to a study group the group's
+ * members in that class — an approximation when rosters changed during the period.
  */
 final class AttendanceStats
 {
@@ -47,8 +47,10 @@ final class AttendanceStats
             "SELECT COALESCE(SUM(x.sessions * x.students), 0) FROM (
                 SELECT COUNT(*) AS sessions,
                        (SELECT COUNT(*) FROM class_enrollments e JOIN students s ON s.id = e.student_id
-                         WHERE e.class_id = ta.class_id AND e.left_on IS NULL AND s.deleted_at IS NULL) AS students
-                $base GROUP BY ta.class_id) x",
+                         WHERE e.class_id = ta.class_id AND e.left_on IS NULL AND s.deleted_at IS NULL
+                           AND (ta.study_group_id IS NULL OR e.student_id IN (SELECT m.student_id FROM study_group_students m WHERE m.group_id = ta.study_group_id))
+                       ) AS students
+                $base GROUP BY ta.id, ta.class_id, ta.study_group_id) x",
             $params
         );
         if ($expected === 0) {
@@ -74,16 +76,32 @@ final class AttendanceStats
         $where = "ta.class_id = ? AND ls.status = 'held' AND {$scope[0]} $range";
         $params = [$classId, ...$scope[1], ...$rangeParams];
 
-        $sessions = (int) $db->value(
-            "SELECT COUNT(*) FROM lesson_sessions ls JOIN teaching_assignments ta ON ta.id = ls.teaching_assignment_id WHERE $where",
+        // Lessons held: all of the class's lessons, but those of a study group only for its members.
+        $sessions = 0;
+        $groupSessions = [];
+        foreach ($db->all(
+            "SELECT ta.study_group_id, COUNT(*) AS n FROM lesson_sessions ls JOIN teaching_assignments ta ON ta.id = ls.teaching_assignment_id
+              WHERE $where GROUP BY ta.study_group_id",
             $params
-        );
+        ) as $row) {
+            if ($row['study_group_id'] === null) {
+                $sessions = (int) $row['n'];
+            } else {
+                $groupSessions[(int) $row['study_group_id']] = (int) $row['n'];
+            }
+        }
+        $memberOf = [];
+        if ($groupSessions !== []) {
+            foreach ($db->all('SELECT group_id, student_id FROM study_group_students WHERE group_id IN (' . implode(',', array_keys($groupSessions)) . ')') as $m) {
+                $memberOf[(int) $m['student_id']][] = (int) $m['group_id'];
+            }
+        }
         $counts = [];
         foreach ($db->all(
             "SELECT ar.student_id, ar.status, COUNT(*) AS n FROM attendance_records ar
                JOIN lesson_sessions ls ON ls.id = ar.lesson_session_id
                JOIN teaching_assignments ta ON ta.id = ls.teaching_assignment_id
-              WHERE $where GROUP BY ar.student_id, ar.status",
+              WHERE $where AND ar.status IN ('absent', 'justified', 'late') GROUP BY ar.student_id, ar.status",
             $params
         ) as $row) {
             $counts[(int) $row['student_id']][$row['status']] = (int) $row['n'];
@@ -96,9 +114,13 @@ final class AttendanceStats
         ) as $student) {
             $c = $counts[(int) $student['id']] ?? [];
             $missed = ($c['absent'] ?? 0) + ($c['justified'] ?? 0);
+            $own = $sessions;
+            foreach ($memberOf[(int) $student['id']] ?? [] as $groupId) {
+                $own += $groupSessions[$groupId] ?? 0;
+            }
             $rows[] = $student + [
-                'sessions' => $sessions, 'absent' => $c['absent'] ?? 0, 'justified' => $c['justified'] ?? 0, 'late' => $c['late'] ?? 0,
-                'rate' => $sessions === 0 ? null : round(max(0, $sessions - $missed) / $sessions * 100, 1),
+                'sessions' => $own, 'absent' => $c['absent'] ?? 0, 'justified' => $c['justified'] ?? 0, 'late' => $c['late'] ?? 0,
+                'rate' => $own === 0 ? null : round(max(0, $own - $missed) / $own * 100, 1),
             ];
         }
         return $rows;
@@ -112,7 +134,7 @@ final class AttendanceStats
             "SELECT ar.status, COUNT(*) AS n FROM attendance_records ar
                JOIN lesson_sessions ls ON ls.id = ar.lesson_session_id
                JOIN teaching_assignments ta ON ta.id = ls.teaching_assignment_id
-              WHERE ar.student_id = ? AND ta.academic_year_id = ? AND ls.status = 'held' AND {$scope[0]}
+              WHERE ar.student_id = ? AND ta.academic_year_id = ? AND ls.status = 'held' AND ar.status IN ('absent', 'justified', 'late') AND {$scope[0]}
               GROUP BY ar.status",
             [$studentId, $yearId, ...$scope[1]]
         ) as $row) {

@@ -1,12 +1,21 @@
 <?php
 
 return [
-    'name' => 'מערכת ניהול פדגוגי',
+    'name' => 'DarsPlus',
+    'made_by' => 'פותח על ידי :vendor',
+    'rights_reserved' => 'כל הזכויות שמורות',
     'skip_to_content' => 'דלג לתוכן הראשי',
     'close' => 'סגירה',
     'main_nav' => 'תפריט ראשי',
     'open_menu' => 'פתיחת התפריט',
     'language' => 'שפת הממשק',
+    'theme' => [
+        'auto' => 'אוטומטי (לפי המכשיר)',
+        'light' => 'בהיר',
+        'dark' => 'כהה',
+        'current' => 'מראה: :mode',
+        'switch' => 'המראה הנוכחי: :mode. מעבר ל: :next',
+    ],
     'change_language' => 'החלפת שפה',
     'confirm_title' => 'אישור פעולה',
     'confirm' => 'אישור',
@@ -17,6 +26,7 @@ return [
     'clear' => 'ניקוי',
     'actions' => 'פעולות',
     'none' => 'לא נמצאו רשומות',
+    'none_filtered' => 'אין תוצאות התואמות את החיפוש או הסינון.',
     'active' => 'פעיל',
     'inactive' => 'לא פעיל',
     'total' => 'סה"כ :count רשומות',

@@ -13,6 +13,7 @@ use App\Services\AttendanceStats;
 use App\Services\GoalService;
 use App\Services\GradeStats;
 use App\Services\Notifier;
+use App\Services\TeacherWeek;
 
 /**
  * The dashboard. Every figure is computed from the database on each request and
@@ -24,6 +25,12 @@ final class DashboardController extends Controller
 {
     public function index(Request $request): Response
     {
+        if (!can('dashboard.view')) {
+            if (can('portal.view')) {
+                return Response::redirect('/me');
+            }
+            throw new \App\Core\HttpException(403);
+        }
         $db = $this->db();
         $auth = $this->auth();
         $schoolId = $this->schoolId();
@@ -214,7 +221,15 @@ final class DashboardController extends Controller
             );
         }
 
+        // ---- A teacher always sees their own week first.
+        $myWeek = null;
+        $teacherId = (int) $db->value('SELECT id FROM teachers WHERE user_id = ? AND school_id = ? AND deleted_at IS NULL', [$me, $schoolId]);
+        if ($teacherId > 0 && $year !== null && $auth->can('attendance.view')) {
+            $myWeek = TeacherWeek::build($db, $schoolId, $year, $teacherId, $request->str('week'), $auth->can('attendance.create'));
+        }
+
         return $this->view('dashboard/index', [
+            'myWeek' => $myWeek,
             'groups' => array_filter(['dashboard.group_general' => $general, 'dashboard.group_pedagogy' => $pedagogy, 'dashboard.group_work' => $work]),
             'charts' => $charts, 'options' => $options, 'filters' => $filters, 'activity' => $activity, 'year' => $year,
         ]);

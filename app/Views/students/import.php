@@ -44,6 +44,12 @@ View::share('title', __('students.import.title'));
     </div>
 
     <div class="alert alert-info" role="status"><?= e(__('students.import.preview_note')) ?></div>
+    <?php if (!empty($analysis['ignored'])): ?>
+        <div class="alert alert-secondary" role="note">
+            <?= e(__('students.import.ignored_columns')) ?>
+            <strong><?= e(implode(' · ', $analysis['ignored'])) ?></strong>
+        </div>
+    <?php endif; ?>
 
     <div class="card mb-3">
         <div class="table-responsive">

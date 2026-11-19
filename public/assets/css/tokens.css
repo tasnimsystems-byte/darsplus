@@ -1,0 +1,256 @@
+/* DarsPlus design tokens – "Sky" theme: a white page, sky blue and its neighbours.
+   Three layers:
+     1. primitives  – raw palette, type scale, spacing, radii (never used by components directly);
+     2. semantic    – what a value is for (--c-surface, --c-text-muted, --c-primary…); components use only these;
+     3. themes      – re-map the semantic layer:
+          <html data-audience="staff | teen | junior">  chosen from the user's role
+          <html data-bs-theme="light | dark">            Bootstrap 5.3 colour mode (user preference or the device's)
+   Every text/background pair below meets WCAG 2.1 AA (4.5:1 for text, 3:1 for large text and UI borders that carry meaning).
+   Fonts (Google Fonts, served locally – see fonts.css): Rubik for Hebrew and Latin, Tajawal for Arabic. */
+
+/* ---------- 1. Primitives ---------- */
+:root {
+    /* Sky (the brand) */
+    --p-sky-50: #f2f9ff;
+    --p-sky-100: #e0f2fe;
+    --p-sky-200: #bae6fd;
+    --p-sky-300: #7dd3fc;
+    --p-sky-400: #38bdf8;
+    --p-sky-500: #0ea5e9;
+    --p-sky-700: #0272b0;
+    --p-sky-800: #025b8d;
+    --p-sky-900: #0c3c5e;
+    --p-cyan-500: #06b6d4;
+    --p-azure-600: #2563eb;
+
+    /* Ink (text on white) */
+    --p-ink-900: #0f2a3d;
+    --p-ink-700: #44607a;
+    --p-ink-500: #587188;
+    --p-line-100: #edf4fa;
+    --p-line-200: #e1edf6;
+    --p-line-300: #cfe2f0;
+    --p-line-400: #b4cde0;
+
+    /* Night (dark mode) */
+    --p-night-950: #08131e;
+    --p-night-900: #0a1622;
+    --p-night-850: #0f1f2e;
+    --p-night-800: #142838;
+    --p-night-700: #1f3a50;
+    --p-night-600: #34556e;
+    --p-night-text: #e4eef6;
+    --p-night-muted: #a3b9cb;
+
+    /* Bright (junior) */
+    --p-sun-400: #ffc93c;
+    --p-berry-500: #d6336c;
+    --p-cream-50: #fffdf7;
+
+    /* Type scale (rem) and rhythm */
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-md: 1rem;
+    --fs-lg: 1.125rem;
+    --fs-xl: 1.375rem;
+    --fs-2xl: 1.75rem;
+    --fs-3xl: 2.125rem;
+
+    /* Spacing: a 4px grid */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.25rem;
+    --sp-6: 1.5rem;
+    --sp-8: 2rem;
+    --sp-10: 2.5rem;
+
+    --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* ---------- 2. Semantic tokens: staff, light (the default) ---------- */
+:root {
+    --font-body: "Rubik", "Tajawal", "Segoe UI", Tahoma, sans-serif;
+    --font-display: "Rubik", "Tajawal", "Segoe UI", Tahoma, sans-serif;
+    --fs-base: 0.95rem;
+    --lh-body: 1.6;
+    --radius: 0.6rem;
+    --radius-sm: 0.4rem;
+    --radius-lg: 0.95rem;
+
+    --c-page: #ffffff;
+    --c-page-line: transparent;
+    --c-surface: #ffffff;
+    --c-surface-2: var(--p-sky-50);
+    --c-surface-3: #e6f3fc;
+    --c-header: #f7fbfe;
+    --c-border: var(--p-line-200);
+    --c-border-strong: var(--p-line-300);
+    --c-field-border: #7593ad;
+    --c-field-border-hover: var(--c-primary);
+    --c-row-line: var(--p-line-100);
+    --c-text: var(--p-ink-900);
+    --c-text-muted: var(--p-ink-700);
+    --c-text-faint: var(--p-ink-500);
+
+    --c-primary: var(--p-sky-700);
+    --c-primary-rgb: 2, 114, 176;
+    --c-primary-strong: var(--p-sky-800);
+    --c-primary-soft: var(--p-sky-100);
+    --c-on-primary: #fff;
+    --c-accent: var(--p-sky-400);
+    --c-accent-rgb: 56, 189, 248;
+    --c-accent-soft: #e3f6ff;
+    --c-on-accent: #072a42;
+    --c-focus: #0284c7;
+    --c-highlight: #eaf7ff;
+
+    /* The menu: white, set apart by a hairline; the current page in sky. */
+    --c-nav: #ffffff;
+    --c-nav-deep: var(--p-sky-50);
+    --c-nav-text: #23405a;
+    --c-nav-muted: var(--p-ink-500);
+    --c-nav-edge: var(--p-line-200);
+    --c-nav-hover: #f0f8fe;
+    --c-nav-active: var(--p-sky-100);
+    --c-nav-active-text: var(--p-sky-800);
+    --c-topbar: rgba(255, 255, 255, 0.9);
+
+    /* The online lesson room stays dark whatever the theme, so faces and screens stand out. */
+    --c-stage: #0b1a2a;
+    --c-stage-raise: #13283c;
+
+    --c-info-bg: #e6f4fd;      --c-info-fg: #0b4a6f;    --c-info-edge: #38a3d8;
+    --c-success-bg: #e5f6ee;   --c-success-fg: #17533a; --c-success-edge: #3fa36b;
+    --c-warning-bg: #fff5d9;   --c-warning-fg: #6b4b0d; --c-warning-edge: #f0b429;
+    --c-danger-bg: #fdeaea;    --c-danger-fg: #8a1f1f;  --c-danger-edge: #d64545;
+
+    --chart-1: #0272b0; --chart-2: #38bdf8; --chart-3: #f59e0b; --chart-4: #14b8a6;
+    --chart-5: #6366f1; --chart-6: #ec4899; --chart-7: #84cc16; --chart-8: #64748b;
+
+    --shadow-rgb: 15, 60, 100;
+    --shadow-sheet: 0 1px 2px rgba(var(--shadow-rgb), 0.05), 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3);
+    --shadow-lift: 0 2px 4px rgba(var(--shadow-rgb), 0.06), 0 18px 34px -18px rgba(var(--shadow-rgb), 0.38);
+    --chalk-grain: 0;
+}
+
+/* Arabic pages: Tajawal first; its letters are small, so a little larger and with more line height. */
+:root:lang(ar) {
+    --font-body: "Tajawal", "Rubik", "Segoe UI", Tahoma, sans-serif;
+    --font-display: "Tajawal", "Rubik", "Segoe UI", Tahoma, sans-serif;
+    --fs-base: 1.02rem;
+    --lh-body: 1.7;
+}
+
+/* ---------- 3a. Dark: a night sky ---------- */
+[data-bs-theme="dark"] {
+    --c-page: var(--p-night-900);
+    --c-page-line: transparent;
+    --c-surface: var(--p-night-850);
+    --c-surface-2: var(--p-night-800);
+    --c-surface-3: #1a3346;
+    --c-header: #12263a;
+    --c-border: var(--p-night-700);
+    --c-border-strong: #29475f;
+    --c-field-border: #52748f;
+    --c-field-border-hover: #46708e;
+    --c-row-line: #18304a;
+    --c-text: var(--p-night-text);
+    --c-text-muted: var(--p-night-muted);
+    --c-text-faint: #8aa3b7;
+
+    --c-primary: var(--p-sky-400);
+    --c-primary-rgb: 56, 189, 248;
+    --c-primary-strong: var(--p-sky-300);
+    --c-primary-soft: #0c3550;
+    --c-on-primary: #04263a;
+    --c-accent: var(--p-sky-300);
+    --c-accent-rgb: 125, 211, 252;
+    --c-accent-soft: #0e3a55;
+    --c-on-accent: #04263a;
+    --c-focus: var(--p-sky-300);
+    --c-highlight: #10314a;
+
+    --c-nav: var(--p-night-950);
+    --c-nav-deep: #060f18;
+    --c-nav-text: #d6e6f3;
+    --c-nav-muted: #8ba6bb;
+    --c-nav-edge: #1a3043;
+    --c-nav-hover: rgba(255, 255, 255, 0.05);
+    --c-nav-active: #0f3a57;
+    --c-nav-active-text: #bfe8ff;
+    --c-topbar: rgba(10, 22, 34, 0.88);
+
+    --c-info-bg: #0f3048;      --c-info-fg: #bfe3f8;    --c-info-edge: #38a3d8;
+    --c-success-bg: #12332a;   --c-success-fg: #b7e6cc; --c-success-edge: #3fa36b;
+    --c-warning-bg: #352a10;   --c-warning-fg: #f6d98e; --c-warning-edge: #f0b429;
+    --c-danger-bg: #3b1717;    --c-danger-fg: #f6c1c1;  --c-danger-edge: #e05c5c;
+
+    --chart-1: #38bdf8; --chart-2: #7dd3fc; --chart-3: #fbbf24; --chart-4: #2dd4bf;
+    --chart-5: #818cf8; --chart-6: #f472b6; --chart-7: #a3e635; --chart-8: #94a3b8;
+
+    --shadow-rgb: 0, 0, 0;
+}
+
+/* ---------- 3b. Teen students (intermediate & secondary): the same sky, rounder and a little larger ---------- */
+[data-audience="teen"] {
+    --fs-base: 1rem;
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1.1rem;
+}
+
+[data-audience="teen"]:lang(ar) {
+    --fs-base: 1.06rem;
+}
+
+/* ---------- 3c. Junior students (primary school): bright, big and friendly ---------- */
+[data-audience="junior"] {
+    --fs-base: 1.15rem;
+    --lh-body: 1.75;
+    --radius: 1.1rem;
+    --radius-sm: 0.8rem;
+    --radius-lg: 1.6rem;
+
+    --c-page: var(--p-cream-50);
+    --c-surface: #fff;
+    --c-accent: var(--p-sun-400);
+    --c-accent-rgb: 255, 201, 60;
+    --c-on-accent: #3d2a00;
+    --c-focus: var(--p-berry-500);
+}
+
+/* ---------- Bootstrap mapped onto the semantic layer (light and dark alike) ---------- */
+:root,
+[data-bs-theme="light"],
+[data-bs-theme="dark"] {
+    --bs-body-font-family: var(--font-body);
+    --bs-body-font-size: var(--fs-base);
+    --bs-body-line-height: var(--lh-body);
+    --bs-body-bg: var(--c-page);
+    --bs-body-color: var(--c-text);
+    --bs-emphasis-color: var(--c-text);
+    --bs-secondary-color: var(--c-text-muted);
+    --bs-tertiary-color: var(--c-text-faint);
+    --bs-secondary-bg: var(--c-surface-2);
+    --bs-tertiary-bg: var(--c-surface-2);
+    --bs-border-color: var(--c-border);
+    --bs-border-radius: var(--radius);
+    --bs-border-radius-sm: var(--radius-sm);
+    --bs-border-radius-lg: var(--radius-lg);
+    --bs-primary: var(--c-primary);
+    --bs-primary-rgb: var(--c-primary-rgb);
+    --bs-primary-text-emphasis: var(--c-primary-strong);
+    --bs-primary-bg-subtle: var(--c-primary-soft);
+    --bs-link-color: var(--c-primary);
+    --bs-link-color-rgb: var(--c-primary-rgb);
+    --bs-link-hover-color: var(--c-primary-strong);
+    --bs-focus-ring-color: rgba(var(--c-primary-rgb), 0.3);
+    --bs-warning-bg-subtle: var(--c-warning-bg);
+    color-scheme: light;
+}
+
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+}

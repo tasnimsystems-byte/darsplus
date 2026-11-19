@@ -40,6 +40,10 @@ use App\Controllers\StaffDevController;
 use App\Controllers\TaskController;
 use App\Controllers\NetworkController;
 use App\Controllers\ReportController;
+use App\Controllers\TimetableController;
+use App\Controllers\SchoolSettingsController;
+use App\Controllers\CertificateController;
+use App\Controllers\StudyGroupController;
 use App\Core\Router;
 use App\Reports\Reports;
 
@@ -49,6 +53,11 @@ use App\Reports\Reports;
 $router->get('/login', [AuthController::class, 'showLogin'], ['auth' => false]);
 $router->post('/login', [AuthController::class, 'login'], ['auth' => false]);
 $router->post('/locale', [ProfileController::class, 'locale'], ['auth' => false]);
+// Sign-in through the Ministry of Education (OpenID Connect); 404 while not configured.
+$router->get('/auth/sso', [\App\Controllers\SsoController::class, 'start'], ['auth' => false]);
+$router->get('/auth/sso/callback', [\App\Controllers\SsoController::class, 'callback'], ['auth' => false]);
+$router->post('/auth/sso/unlink', [\App\Controllers\SsoController::class, 'unlink'], ['school' => false, 'password' => true]);
+$router->post('/theme', [ProfileController::class, 'theme'], ['school' => false, 'password' => true]);
 
 // Authenticated, before a school is chosen / while a password change is forced
 $router->post('/logout', [AuthController::class, 'logout'], ['school' => false, 'password' => true]);
@@ -57,7 +66,28 @@ $router->post('/password', [ProfileController::class, 'updatePassword'], ['schoo
 $router->get('/select-school', [AuthController::class, 'showSchools'], ['school' => false]);
 $router->post('/select-school', [AuthController::class, 'selectSchool'], ['school' => false]);
 
-$router->get('/', [DashboardController::class, 'index'], ['permission' => 'dashboard.view']);
+// The home page: the dashboard for the staff; students and parents are sent to their portal.
+$router->get('/', [DashboardController::class, 'index']);
+
+// Student and parent portal: their own data only.
+foreach (['home' => ['get', ''], 'grades' => ['get', '/grades'], 'attendance' => ['get', '/attendance'], 'homework' => ['get', '/homework'], 'remarks' => ['get', '/remarks'],
+          'certificates' => ['get', '/certificates'], 'certificate' => ['get', '/certificates/{term}'], 'chooseChild' => ['post', '/child']] as $action => [$method, $suffix]) {
+    $router->$method('/me' . $suffix, [\App\Controllers\PortalController::class, $action], ['permission' => 'portal.view']);
+}
+// Online lessons (LiveKit): the teacher opens a live meeting from the lesson page; the lesson's students
+// enter it from their portal. Who may enter, and as what, is decided in OnlineLessons::access().
+$router->get('/me/live', [\App\Controllers\OnlineLessonController::class, 'live'], ['permission' => 'portal.view']);
+$router->post('/attendance/sessions/{id}/online', [\App\Controllers\OnlineLessonController::class, 'start'], ['permission' => 'attendance.update']);
+$router->get('/online/{id}', [\App\Controllers\OnlineLessonController::class, 'room']);
+$router->post('/online/{id}/token', [\App\Controllers\OnlineLessonController::class, 'token']);
+$router->post('/online/{id}/moderate', [\App\Controllers\OnlineLessonController::class, 'moderate'], ['permission' => 'attendance.update']);
+$router->post('/online/{id}/end', [\App\Controllers\OnlineLessonController::class, 'end'], ['permission' => 'attendance.update']);
+// Portal accounts of a class (the principal).
+$router->get('/portal-accounts', [\App\Controllers\PortalAccountController::class, 'index'], ['permission' => 'users.create']);
+$router->get('/portal-accounts/credentials', [\App\Controllers\PortalAccountController::class, 'credentials'], ['permission' => 'users.create']);
+$router->post('/portal-accounts/students', [\App\Controllers\PortalAccountController::class, 'createStudents'], ['permission' => 'users.create']);
+$router->post('/portal-accounts/parents', [\App\Controllers\PortalAccountController::class, 'createParents'], ['permission' => 'users.create']);
+$router->post('/portal-accounts/reset', [\App\Controllers\PortalAccountController::class, 'resetPassword'], ['permission' => 'users.create']);
 
 $router->get('/notifications', [NotificationController::class, 'index']);
 $router->post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
@@ -172,11 +202,39 @@ $router->get('/curriculum/{id}/progress/{assignment}', [CurriculumController::cl
 $router->post('/curriculum/{id}/progress/{assignment}', [CurriculumController::class, 'saveProgress'], ['permission' => 'curriculum.update']);
 
 $crud('/assessment-types', AssessmentTypeController::class, 'assessments');
+$router->get('/assessments/gradebook', [AssessmentController::class, 'gradebook'], ['permission' => 'assessments.view']);
+$router->post('/assessments/gradebook', [AssessmentController::class, 'saveGradebook'], ['permission' => 'assessments.update']);
 $crud('/assessments', AssessmentController::class, 'assessments');
 $router->get('/assessments/{id}', [AssessmentController::class, 'show'], ['permission' => 'assessments.view']);
 $router->post('/assessments/{id}/results', [AssessmentController::class, 'saveResults'], ['permission' => 'assessments.update']);
 $router->post('/assessments/{id}/publish', [AssessmentController::class, 'publish'], ['permission' => 'assessments.update']);
 $router->get('/achievements', [AchievementController::class, 'index'], ['permission' => 'assessments.view']);
+
+// Study groups are managed by whoever manages the school structure (principal, vice principal).
+foreach (['index' => ['get', ''], 'create' => ['get', '/create'], 'build' => ['post', '/create'], 'shared' => ['get', '/shared'], 'createShared' => ['post', '/shared'], 'store' => ['post', ''], 'edit' => ['get', '/{id}/edit'],
+          'update' => ['post', '/{id}'], 'destroy' => ['post', '/{id}/delete'], 'show' => ['get', '/{id}'],
+          'saveMembers' => ['post', '/{id}/members'], 'saveLessons' => ['post', '/{id}/lessons']] as $action => [$method, $suffix]) {
+    $router->$method('/study-groups' . $suffix, [StudyGroupController::class, $action], ['permission' => 'structure.update']);
+}
+
+// Term certificates: the principal's page.
+$router->get('/certificates', [CertificateController::class, 'index'], ['permission' => 'settings.update']);
+$router->get('/certificates/print', [CertificateController::class, 'print'], ['permission' => 'settings.update']);
+$router->get('/certificates/remarks', [CertificateController::class, 'remarks'], ['permission' => 'settings.update']);
+$router->post('/certificates/remarks', [CertificateController::class, 'saveRemarks'], ['permission' => 'settings.update']);
+$router->post('/certificates/header', [CertificateController::class, 'saveHeader'], ['permission' => 'settings.update']);
+$router->post('/certificates/publish', [CertificateController::class, 'publish'], ['permission' => 'settings.update']);
+
+$router->get('/school-settings', [SchoolSettingsController::class, 'index'], ['permission' => 'structure.update']);
+$router->post('/school-settings/terms', [SchoolSettingsController::class, 'saveTerms'], ['permission' => 'structure.update']);
+$router->post('/school-settings/components', [SchoolSettingsController::class, 'saveComponents'], ['permission' => 'structure.update']);
+$router->post('/school-settings/components/template', [SchoolSettingsController::class, 'applyTemplate'], ['permission' => 'structure.update']);
+
+$router->get('/timetable', [TimetableController::class, 'index'], ['permission' => 'structure.view']);
+$router->get('/timetable/import', [TimetableController::class, 'importForm'], ['permission' => 'structure.update']);
+$router->post('/timetable/import', [TimetableController::class, 'preview'], ['permission' => 'structure.update']);
+$router->post('/timetable/import/confirm', [TimetableController::class, 'confirm'], ['permission' => 'structure.update']);
+$router->post('/timetable/import/cancel', [TimetableController::class, 'cancel'], ['permission' => 'structure.update']);
 
 $router->get('/attendance', [AttendanceController::class, 'index'], ['permission' => 'attendance.view']);
 $router->get('/attendance/report', [AttendanceController::class, 'report'], ['permission' => 'attendance.view']);

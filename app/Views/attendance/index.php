@@ -1,4 +1,5 @@
 <?php
+use App\Controllers\TimetableController;
 use App\Core\View;
 
 View::share('title', __('attendance.title'));
@@ -18,6 +19,39 @@ View::share('title', __('attendance.title'));
     </div>
     <div class="col-auto"><button class="btn btn-outline-primary" type="submit"><?= e(__('attendance.show_day')) ?></button></div>
 </form>
+
+<?php if ($canRecord && $hasTimetable): ?>
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h6 mb-0"><?= e(__('timetable.today')) ?></h2></div>
+        <?php if ($scheduled === []): ?>
+            <div class="card-body text-secondary"><?= e(__('timetable.today_none')) ?></div>
+        <?php else: ?>
+            <ul class="list-group list-group-flush">
+                <?php foreach ($scheduled as $lesson): ?>
+                    <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <span>
+                            <strong><?= e(TimetableController::periodLabel($periods, (int) $lesson['period_number'])) ?></strong>
+                            | <?= e($assignments[(int) $lesson['teaching_assignment_id']] ?? '') ?>
+                        </span>
+                        <?php if ($lesson['session_id'] !== null): ?>
+                            <a class="btn btn-sm btn-outline-success" href="<?= e(url('/attendance/sessions/' . (int) $lesson['session_id'])) ?>"><i class="bi bi-check2" aria-hidden="true"></i> <?= e(__('timetable.opened')) ?></a>
+                        <?php elseif ($date > date('Y-m-d')): ?>
+                            <span class="badge text-bg-light"><?= e(__('timetable.future')) ?></span>
+                        <?php else: ?>
+                            <form method="post" action="<?= e(url('/attendance/sessions')) ?>">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="teaching_assignment_id" value="<?= (int) $lesson['teaching_assignment_id'] ?>">
+                                <input type="hidden" name="lesson_date" value="<?= e($date) ?>">
+                                <input type="hidden" name="period_number" value="<?= (int) $lesson['period_number'] ?>">
+                                <button class="btn btn-sm btn-primary" type="submit"><?= e(__('timetable.open')) ?></button>
+                            </form>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
 
 <div class="row g-4">
     <?php if ($canRecord && $assignments !== []): ?>
@@ -56,7 +90,7 @@ View::share('title', __('attendance.title'));
                         <tbody>
                         <?php foreach ($sessions as $session): ?>
                             <tr>
-                                <th scope="row"><a href="<?= e(url('/attendance/sessions/' . (int) $session['id'])) ?>"><?= e(__('attendance.period', ['n' => (int) $session['period_number']])) ?></a></th>
+                                <th scope="row"><a href="<?= e(url('/attendance/sessions/' . (int) $session['id'])) ?>"><?= e(TimetableController::periodLabel($periods, (int) $session['period_number'])) ?></a></th>
                                 <td><?= e($session['class_name']) ?></td>
                                 <td><?= e($session['subject_name']) ?></td>
                                 <td><?= e($session['teacher_name']) ?></td>

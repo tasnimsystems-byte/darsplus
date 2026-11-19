@@ -19,3 +19,11 @@ View::share('title', __('auth.login_title'));
     ]) ?>
     <button class="btn btn-primary w-100" type="submit"><?= e(__('auth.login_button')) ?></button>
 </form>
+<?php if (\App\Services\OidcClient::enabled()): ?>
+    <div class="sso-divider" role="separator"><span><?= e(__('auth.sso.or')) ?></span></div>
+    <a class="btn btn-outline-primary w-100 sso-button" href="<?= e(url('/auth/sso')) ?>">
+        <i class="bi bi-shield-lock" aria-hidden="true"></i>
+        <?= e((string) \App\Services\OidcClient::config()['label_' . (\App\Core\App::lang()->locale() === 'ar' ? 'ar' : 'he')]) ?>
+    </a>
+    <p class="small text-secondary mt-2 mb-0"><?= e(__('auth.sso.login_help')) ?></p>
+<?php endif; ?>

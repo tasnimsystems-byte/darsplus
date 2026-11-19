@@ -47,7 +47,7 @@ final class Auth
         }
 
         $user = $this->db->one(
-            'SELECT id, username, full_name, email, locale, must_change_password, password_changed_at
+            'SELECT id, username, full_name, email, locale, theme, must_change_password, password_changed_at
                FROM users WHERE id = ? AND is_active = 1 AND deleted_at IS NULL',
             [$userId]
         );
