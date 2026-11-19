@@ -57,7 +57,7 @@ final class AttendanceAndRiskTest extends TestCase
         self::assertStringContainsString('Student3', $page->body);
         self::assertStringNotContainsString('Student4', $page->body);
 
-        $this->assertRedirect("/attendance/sessions/$id", $this->post("/attendance/sessions/$id", ['students' => [
+        $this->assertRedirect("/attendance/sessions/$id", $this->post("/attendance/sessions/$id", ['topic' => 'שבר פשוט', 'students' => [
             $this->s[1] => ['status' => 'absent', 'note' => 'ללא הודעה'],
             $this->s[2] => ['status' => 'late'],
             $this->s[3] => ['status' => 'present'],
@@ -68,7 +68,7 @@ final class AttendanceAndRiskTest extends TestCase
             array_map('array_values', App::db()->all('SELECT student_id, status, note FROM attendance_records ORDER BY student_id'))
         );
         // Marking the student present again removes the row.
-        $this->post("/attendance/sessions/$id", ['students' => [$this->s[1] => ['status' => 'present'], $this->s[2] => ['status' => 'justified']]]);
+        $this->post("/attendance/sessions/$id", ['topic' => 'שבר פשוט', 'students' => [$this->s[1] => ['status' => 'present'], $this->s[2] => ['status' => 'justified']]]);
         self::assertSame([[$this->s[2], 'justified']], array_map('array_values', App::db()->all('SELECT student_id, status FROM attendance_records')));
     }
 

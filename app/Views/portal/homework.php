@@ -21,7 +21,18 @@ View::share('title', __('portal.homework'));
                         <?php if (($row['topic'] ?? '') !== ''): ?>
                             <p class="small text-secondary mb-2"><?= e(__('portal.topic')) ?>: <?= e($row['topic']) ?></p>
                         <?php endif; ?>
-                        <p class="mb-0 text-prewrap"><?= e($row['homework']) ?></p>
+                        <?php if (($row['homework'] ?? '') !== ''): ?>
+                            <p class="mb-0 text-prewrap"><?= e($row['homework']) ?></p>
+                        <?php endif; ?>
+                        <?php if ($row['homework_due'] !== null): ?>
+                            <p class="small fw-semibold text-primary mt-2 mb-0"><i class="bi bi-calendar-check" aria-hidden="true"></i> <?= e(__('portal.due_on', ['date' => date('d/m/Y', strtotime($row['homework_due']))])) ?></p>
+                        <?php endif; ?>
+                        <?php if ($row['attachments'] !== []): ?>
+                            <div class="mt-2">
+                                <div class="visually-hidden"><?= e(__('portal.attachments')) ?></div>
+                                <?= View::partial('partials/homework_attachments', ['attachments' => $row['attachments']]) ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </article>
             </div>

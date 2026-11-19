@@ -270,6 +270,55 @@
         });
     });
 
+    // Lesson page: in-person or remote. Only a remote lesson shows the online meeting and who joined it.
+    var deliveries = document.querySelectorAll('[data-delivery]');
+    deliveries.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            var remote = radio.checked && radio.value === 'remote';
+            if (!radio.checked) {
+                return;
+            }
+            document.querySelectorAll('[data-remote-only]').forEach(function (el) {
+                el.hidden = !remote && !el.classList.contains('is-live');
+            });
+        });
+    });
+
+    // Homework: one more link row each time (up to five).
+    var addLink = document.querySelector('[data-hw-add-link]');
+    if (addLink) {
+        addLink.addEventListener('click', function () {
+            var box = document.querySelector('[data-hw-links]');
+            var rows = box.querySelectorAll('[data-hw-link-row]');
+            if (rows.length >= 5) {
+                addLink.disabled = true;
+                return;
+            }
+            var row = rows[0].cloneNode(true);
+            row.querySelectorAll('input').forEach(function (input) {
+                input.value = '';
+                input.name = input.name.replace(/\[\d+\]/, '[' + rows.length + ']');
+            });
+            box.appendChild(row);
+            row.querySelector('input').focus();
+            addLink.disabled = rows.length + 1 >= 5;
+        });
+    }
+
+    // A topic chosen from the curriculum plan fills an empty lesson topic.
+    var planTopic = document.querySelector('[data-curriculum-topic]');
+    var lessonTopic = document.querySelector('[data-lesson-topic]');
+    if (planTopic && lessonTopic) {
+        planTopic.addEventListener('change', function () {
+            var option = planTopic.options[planTopic.selectedIndex];
+            if (lessonTopic.value.trim() === '' && option && option.value !== '') {
+                var text = option.textContent.replace(/\s*✓\s*$/, '');
+                var cut = text.indexOf(' – ');
+                lessonTopic.value = cut >= 0 ? text.slice(cut + 3) : text;
+            }
+        });
+    }
+
     // The portal's list of live lessons looks again every half minute.
     var live = document.querySelector('[data-live-refresh]');
     if (live) {

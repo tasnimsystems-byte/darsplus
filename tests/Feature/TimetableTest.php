@@ -380,7 +380,9 @@ final class TimetableTest extends TestCase
         self::assertStringContainsString(__('attendance.so_far', ['absences' => 1, 'lates' => 0]), $page->body);
 
         // Completing the topic.
+        // No topic written: the curriculum topic becomes the lesson's topic.
         $this->post("/attendance/sessions/$second", ['curriculum_topic_id' => (string) $topic, 'topic_progress' => 'done']);
+        self::assertSame('חיבור שברים', $db->value('SELECT topic FROM lesson_sessions WHERE id = ?', [$second]));
         self::assertSame(['done', '2026-09-06'], array_values($db->one('SELECT status, actual_date FROM curriculum_progress WHERE topic_id = ?', [$topic])), 'The first teaching date is kept.');
 
         // A topic of another plan is refused and nothing changes.
@@ -389,7 +391,7 @@ final class TimetableTest extends TestCase
         $otherTopic = $db->insert('curriculum_topics', ['school_id' => $this->school, 'title' => 'x',
             'unit_id' => $db->insert('curriculum_units', ['school_id' => $this->school, 'plan_id' => $otherPlan, 'title' => 'y'])]);
         $this->post("/attendance/sessions/$second", ['topic' => 'שונה', 'curriculum_topic_id' => (string) $otherTopic]);
-        self::assertNull($db->value('SELECT topic FROM lesson_sessions WHERE id = ?', [$second]));
+        self::assertSame('חיבור שברים', $db->value('SELECT topic FROM lesson_sessions WHERE id = ?', [$second]), 'Unchanged.');
 
         // A lesson that did not take place: the record is saved, attendance is left alone.
         $this->post("/attendance/sessions/$first/cancel");
@@ -421,7 +423,7 @@ final class TimetableTest extends TestCase
         // Sunday 6.9: period 1 mathematics (לוי). Another teacher's history lesson in period 2.
         $this->post('/attendance/sessions', ['teaching_assignment_id' => (string) $this->mathAssignment(), 'lesson_date' => '2026-09-06', 'period_number' => '1']);
         $first = (int) $db->value('SELECT id FROM lesson_sessions');
-        $this->post("/attendance/sessions/$first", ['students' => [$student => ['status' => 'absent'], $other => ['status' => 'justified']]]);
+        $this->post("/attendance/sessions/$first", ['topic' => 'נושא', 'students' => [$student => ['status' => 'absent'], $other => ['status' => 'justified']]]);
 
         $historyTeacher = $this->createUser('t.history', [['subject_teacher', $this->school]]);
         $teacher = App::db()->insert('teachers', ['school_id' => $this->school, 'first_name' => 'נועם', 'last_name' => 'בר', 'user_id' => $historyTeacher]);
@@ -439,7 +441,7 @@ final class TimetableTest extends TestCase
         self::assertStringContainsString('name="students[' . $student . '][status]" value="present"', $page);
 
         // Clicking ends in a plain post of the chosen state.
-        $this->post("/attendance/sessions/$second", ['students' => [$student => ['status' => 'late']]]);
+        $this->post("/attendance/sessions/$second", ['topic' => 'נושא', 'students' => [$student => ['status' => 'late']]]);
         self::assertSame('late', $db->value('SELECT status FROM attendance_records WHERE lesson_session_id = ? AND student_id = ?', [$second, $student]));
         self::assertNull($db->value('SELECT status FROM attendance_records WHERE lesson_session_id = ? AND student_id = ?', [$second, $other]));
     }
@@ -472,7 +474,7 @@ final class TimetableTest extends TestCase
         self::assertStringContainsString(__('attendance.remarks.disruption'), $page);
         self::assertStringContainsString(e(__('attendance.remark_groups.positive')), $page);
 
-        $this->post("/attendance/sessions/$first", ['students' => [
+        $this->post("/attendance/sessions/$first", ['topic' => 'נושא', 'students' => [
             $present => ['status' => 'present', 'remark' => 'no_homework'],
             $absent => ['status' => 'absent', 'remark' => 'not-a-remark'],
         ]]);
@@ -491,7 +493,7 @@ final class TimetableTest extends TestCase
         $this->post('/attendance/sessions', ['teaching_assignment_id' => $assignment, 'lesson_date' => '2026-09-08', 'period_number' => '2']);
         $second = (int) $db->value('SELECT id FROM lesson_sessions WHERE lesson_date = ?', ['2026-09-08']);
         self::assertStringContainsString(__('attendance.remarks_so_far', ['count' => 1]), $this->get("/attendance/sessions/$second")->body);
-        $this->post("/attendance/sessions/$first", ['students' => [$present => ['status' => 'present', 'remark' => ''], $absent => ['status' => 'absent']]]);
+        $this->post("/attendance/sessions/$first", ['topic' => 'נושא', 'students' => [$present => ['status' => 'present', 'remark' => ''], $absent => ['status' => 'absent']]]);
         self::assertNull($db->value('SELECT id FROM attendance_records WHERE student_id = ?', [$present]));
     }
 

@@ -82,6 +82,8 @@ $router->get('/online/{id}', [\App\Controllers\OnlineLessonController::class, 'r
 $router->post('/online/{id}/token', [\App\Controllers\OnlineLessonController::class, 'token']);
 $router->post('/online/{id}/moderate', [\App\Controllers\OnlineLessonController::class, 'moderate'], ['permission' => 'attendance.update']);
 $router->post('/online/{id}/end', [\App\Controllers\OnlineLessonController::class, 'end'], ['permission' => 'attendance.update']);
+// A homework file: staff who see the lesson, or the lesson's students and their parents (checked in the controller).
+$router->get('/lesson-files/{id}', [\App\Controllers\LessonAttachmentController::class, 'download']);
 // Portal accounts of a class (the principal).
 $router->get('/portal-accounts', [\App\Controllers\PortalAccountController::class, 'index'], ['permission' => 'users.create']);
 $router->get('/portal-accounts/credentials', [\App\Controllers\PortalAccountController::class, 'credentials'], ['permission' => 'users.create']);

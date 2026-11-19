@@ -53,6 +53,10 @@ final class OnlineLessonController extends Controller
                 [$this->schoolId(), $session['study_group_id'], $session['teacher_id'], $session['academic_year_id'], $session['lesson_date'], $session['period_number']]
             )) ?: [$id];
         }
+        // Opening a meeting makes it a remote lesson (also for the classes taught together).
+        $this->db()->run(
+            "UPDATE lesson_sessions SET delivery = 'remote' WHERE id IN (" . implode(',', array_map('intval', $together)) . ')'
+        );
         $live = OnlineLessons::liveFor($this->db(), $together);
         if ($live !== null) {
             return Response::redirect('/online/' . (int) $live['id']);

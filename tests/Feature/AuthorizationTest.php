@@ -21,6 +21,9 @@ final class AuthorizationTest extends TestCase
         'GET /auth/sso', 'GET /auth/sso/callback', // the Ministry sign-in itself (404 while not configured)
         // Deleting is decided per document (uploader or documents.delete) inside the controller.
         'POST /documents/{id}/delete',
+        // A homework file is opened by staff (attendance.view, within their scope) and by the lesson's
+        // students and parents (portal.view): LessonAttachmentController::maySee decides per file.
+        'GET /lesson-files/{id}',
         // An online lesson is entered by staff (attendance.view) and by students (portal.view):
         // OnlineLessons::access() decides per meeting who enters, and as what.
         'GET /online/{id}', 'POST /online/{id}/token',

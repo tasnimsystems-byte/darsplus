@@ -85,6 +85,34 @@ final class Request
         return is_array($file) && isset($file['tmp_name']) && !is_array($file['tmp_name']) ? $file : null;
     }
 
+    /**
+     * The files of a multiple upload field (`name="key[]"`), one array per file in the shape of a single upload.
+     *
+     * @return list<array{name: string, type: string, tmp_name: string, error: int, size: int}>
+     */
+    public function fileList(string $key): array
+    {
+        $field = $this->files[$key] ?? null;
+        if (!is_array($field) || !isset($field['tmp_name'])) {
+            return [];
+        }
+        if (!is_array($field['tmp_name'])) {
+            return [$field];
+        }
+        $files = [];
+        foreach (array_keys($field['tmp_name']) as $i) {
+            if (is_array($field['tmp_name'][$i])) {
+                continue;   // deeper nesting is never a field of ours
+            }
+            $files[] = [
+                'name' => (string) ($field['name'][$i] ?? ''), 'type' => (string) ($field['type'][$i] ?? ''),
+                'tmp_name' => (string) $field['tmp_name'][$i], 'error' => (int) ($field['error'][$i] ?? UPLOAD_ERR_NO_FILE),
+                'size' => (int) ($field['size'][$i] ?? 0),
+            ];
+        }
+        return $files;
+    }
+
     public function ip(): string
     {
         // REMOTE_ADDR only: forwarded headers are client-controlled unless a trusted proxy is configured.

@@ -255,13 +255,19 @@ final class PortalController extends Controller
 
     private function homeworkRows(string $in, string $where, array $params, int $limit): array
     {
-        return $this->db()->all(
-            "SELECT ls.lesson_date, ls.period_number, ls.topic, ls.homework, s.name AS subject
+        $rows = $this->db()->all(
+            "SELECT ls.id, ls.lesson_date, ls.period_number, ls.topic, ls.homework, ls.homework_due, s.name AS subject
                FROM lesson_sessions ls JOIN teaching_assignments ta ON ta.id = ls.teaching_assignment_id JOIN subjects s ON s.id = ta.subject_id
-              WHERE ls.teaching_assignment_id IN ($in) AND ls.status = 'held' AND ls.homework IS NOT NULL AND ls.homework <> '' AND $where
+              WHERE ls.teaching_assignment_id IN ($in) AND ls.status = 'held' AND $where
+                AND ((ls.homework IS NOT NULL AND ls.homework <> '') OR EXISTS (SELECT 1 FROM lesson_attachments la WHERE la.lesson_session_id = ls.id))
               ORDER BY ls.lesson_date DESC, ls.period_number DESC LIMIT $limit",
             $params
         );
+        $attachments = \App\Services\LessonAttachments::forSessions($this->db(), array_column($rows, 'id'));
+        foreach ($rows as &$row) {
+            $row['attachments'] = $attachments[(int) $row['id']] ?? [];
+        }
+        return $rows;
     }
 
     public function homework(Request $request): Response

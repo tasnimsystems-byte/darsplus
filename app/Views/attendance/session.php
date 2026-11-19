@@ -19,6 +19,13 @@ foreach ($topics as $topic) {
     $topicOptions[(int) $topic['id']] = $topic['unit_title'] . ' – ' . $topic['title']
         . ($topic['progress'] === 'done' ? ' ✓' : '');
 }
+// In-person is the default; only a remote lesson shows the online meeting and who joined it.
+$delivery = old('delivery', $session['delivery'] ?? 'in_person');
+$delivery = in_array($delivery, AttendanceController::DELIVERY, true) ? $delivery : 'in_person';
+$remote = $delivery === 'remote';
+// After a failed save the marks the teacher made are shown again, not lost.
+$oldStudents = old('students', null);
+$oldStudents = is_array($oldStudents) ? $oldStudents : null;
 $currentTopic = $session['curriculum_topic_id'] !== null ? (int) $session['curriculum_topic_id'] : null;
 $currentProgress = null;
 foreach ($topics as $topic) {
@@ -80,12 +87,32 @@ foreach ($topics as $topic) {
     <div class="alert alert-secondary" role="note"><?= e(__('attendance.cancelled_note')) ?></div>
 <?php endif; ?>
 
+<?php if (!$cancelled): ?>
+    <div class="delivery-bar mb-3">
+        <span class="delivery-label" id="delivery-label"><?= e(__('attendance.delivery.label')) ?></span>
+        <?php if ($canEdit): ?>
+            <div class="btn-group delivery-choice" role="radiogroup" aria-labelledby="delivery-label">
+                <?php foreach (AttendanceController::DELIVERY as $mode): ?>
+                    <input type="radio" class="btn-check" name="delivery" value="<?= e($mode) ?>" id="delivery-<?= e($mode) ?>" form="lesson-form" autocomplete="off"
+                           data-delivery<?= $delivery === $mode ? ' checked' : '' ?>>
+                    <label class="btn btn-outline-primary" for="delivery-<?= e($mode) ?>">
+                        <i class="bi bi-<?= $mode === 'remote' ? 'camera-video' : 'easel' ?>" aria-hidden="true"></i> <?= e(__('attendance.delivery.' . $mode)) ?>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <span class="small text-secondary"><?= e(__('attendance.delivery.help')) ?></span>
+        <?php else: ?>
+            <span class="badge text-bg-light border"><i class="bi bi-<?= $remote ? 'camera-video' : 'easel' ?>" aria-hidden="true"></i> <?= e(__('attendance.delivery.' . $delivery)) ?></span>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
 <?php
 $live = $online['live'];
 $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $online['today']);
 ?>
 <?php if ($showOnline): ?>
-    <section class="card online-card mb-3<?= $live !== null ? ' is-live' : '' ?>" aria-labelledby="online-title">
+    <section class="card online-card mb-3<?= $live !== null ? ' is-live' : '' ?>" aria-labelledby="online-title" data-remote-only<?= $remote || $live !== null ? '' : ' hidden' ?>>
         <div class="card-body d-flex flex-wrap align-items-center gap-3">
             <span class="online-card-icon" aria-hidden="true"><i class="bi bi-camera-video"></i></span>
             <div class="flex-grow-1 min-w-0">
@@ -119,14 +146,14 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                     </form>
                 <?php endif; ?>
                 <?php if ($online['held'] && $editAttendance): ?>
-                    <button class="btn btn-outline-secondary" type="button" data-online-mark-absent title="<?= e(__('online.mark_absent_help')) ?>"><i class="bi bi-person-x" aria-hidden="true"></i> <?= e(__('online.mark_absent')) ?></button>
+                    <button class="btn btn-outline-secondary" type="button" data-online-mark-absent data-remote-only<?= $remote ? '' : ' hidden' ?> title="<?= e(__('online.mark_absent_help')) ?>"><i class="bi bi-person-x" aria-hidden="true"></i> <?= e(__('online.mark_absent')) ?></button>
                 <?php endif; ?>
             </div>
         </div>
     </section>
 <?php endif; ?>
 
-<form method="post" action="<?= e(url("/attendance/sessions/$id")) ?>">
+<form method="post" action="<?= e(url("/attendance/sessions/$id")) ?>" id="lesson-form" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <div class="row g-4">
         <div class="col-12 col-xl-7">
@@ -163,10 +190,16 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                             $sid = (int) $student['id'];
                             $name = $student['last_name'] . ' ' . $student['first_name'];
                             $current = $student['status'] ?? 'present';
+                            $remarkNow = $student['remark'];
+                            if ($oldStudents !== null && $editAttendance) {
+                                $oldRow = is_array($oldStudents[$sid] ?? null) ? $oldStudents[$sid] : [];
+                                $current = in_array($oldRow['status'] ?? null, $choices, true) ? $oldRow['status'] : 'present';
+                                $remarkNow = in_array($oldRow['remark'] ?? null, AttendanceController::remarkCodes(), true) ? $oldRow['remark'] : null;
+                            }
                             $past = $history[$sid] ?? null;
-                            $joined = $online['held'] ? isset($online['joined'][$sid]) : null;
+                            $joined = isset($online['joined'][$sid]);
                             ?>
-                            <tr<?= $joined === null ? '' : ' data-online-joined="' . ($joined ? '1' : '0') . '"' ?>>
+                            <tr data-online-joined="<?= $joined ? '1' : '0' ?>">
                                 <td class="text-secondary small"><?= $i + 1 ?></td>
                                 <th scope="row" class="fw-normal" id="st-<?= $sid ?>">
                                     <?php if (can('students.view')): ?>
@@ -174,8 +207,8 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                                     <?php else: ?>
                                         <?= e($name) ?>
                                     <?php endif; ?>
-                                    <?php if ($joined !== null): ?>
-                                        <span class="badge online-joined-badge<?= $joined ? ' is-joined' : '' ?>"><i class="bi bi-<?= $joined ? 'camera-video' : 'camera-video-off' ?>" aria-hidden="true"></i> <?= e(__($joined ? 'online.joined_badge' : 'online.not_joined_badge')) ?></span>
+                                    <?php if (!$cancelled): ?>
+                                        <span class="badge online-joined-badge<?= $joined ? ' is-joined' : '' ?>" data-remote-only<?= $remote ? '' : ' hidden' ?>><i class="bi bi-<?= $joined ? 'camera-video' : 'camera-video-off' ?>" aria-hidden="true"></i> <?= e(__($joined ? 'online.joined_badge' : 'online.not_joined_badge')) ?></span>
                                     <?php endif; ?>
                                     <?php if (count($groupClasses) > 1 && ($student['class_name'] ?? null) !== null): ?>
                                         <span class="badge text-bg-light border fw-normal"><?= e($student['class_name']) ?></span>
@@ -209,13 +242,13 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                                 </td>
                                 <?php if ($editAttendance): ?>
                                     <td>
-                                        <select class="form-select form-select-sm remark-select<?= in_array($student['remark'], AttendanceController::REMARKS['positive'], true) ? ' remark-positive' : ($student['remark'] !== null ? ' remark-negative' : '') ?>"
+                                        <select class="form-select form-select-sm remark-select<?= in_array($remarkNow, AttendanceController::REMARKS['positive'], true) ? ' remark-positive' : ($remarkNow !== null ? ' remark-negative' : '') ?>"
                                                 name="students[<?= $sid ?>][remark]" aria-label="<?= e(__('attendance.remark') . ': ' . $name) ?>">
                                             <option value=""><?= e(__('attendance.no_remark')) ?></option>
                                             <?php foreach (AttendanceController::REMARKS as $group => $codes): ?>
                                                 <optgroup label="<?= e(__('attendance.remark_groups.' . $group)) ?>">
                                                     <?php foreach ($codes as $code): ?>
-                                                        <option value="<?= e($code) ?>"<?= $student['remark'] === $code ? ' selected' : '' ?>><?= e(__('attendance.remarks.' . $code)) ?></option>
+                                                        <option value="<?= e($code) ?>"<?= $remarkNow === $code ? ' selected' : '' ?>><?= e(__('attendance.remarks.' . $code)) ?></option>
                                                     <?php endforeach; ?>
                                                 </optgroup>
                                             <?php endforeach; ?>
@@ -258,6 +291,9 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                             <dd><?= e($previous['topic'] ?? '—') ?></dd>
                             <dt><?= e(__('attendance.record.homework')) ?></dt>
                             <dd class="mb-0 text-prewrap"><?= e($previous['homework'] ?? '—') ?></dd>
+                            <?php if ($previous['homework_due'] !== null): ?>
+                                <dd class="mb-0 text-secondary"><?= e(__('attendance.homework.due_on', ['date' => date('d/m/Y', strtotime($previous['homework_due']))])) ?></dd>
+                            <?php endif; ?>
                         </dl>
                     </div>
                 </div>
@@ -267,13 +303,14 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                 <div class="card-header"><h2 class="h6 mb-0"><?= e(__('attendance.record.title')) ?></h2></div>
                 <div class="card-body">
                     <?php if ($canEdit): ?>
-                        <?= View::partial('partials/input', ['name' => 'topic', 'label' => __('attendance.record.topic'), 'value' => $session['topic'], 'attrs' => 'maxlength="255"']) ?>
+                        <?= View::partial('partials/input', ['name' => 'topic', 'label' => __('attendance.record.topic'), 'value' => $session['topic'], 'required' => !$cancelled,
+                            'help' => $cancelled ? null : __('attendance.record.topic_help'), 'attrs' => 'maxlength="255" data-lesson-topic']) ?>
                         <?php if ($topicOptions !== []): ?>
                             <div class="row g-2">
                                 <div class="col-12 col-md-8">
                                     <?= View::partial('partials/input', ['name' => 'curriculum_topic_id', 'label' => __('attendance.record.curriculum_topic_id'), 'type' => 'select',
                                         'options' => ['' => __('attendance.record.no_topic')] + $topicOptions, 'value' => $currentTopic,
-                                        'help' => $canProgress ? __('attendance.record.curriculum_help') : null]) ?>
+                                        'help' => $canProgress ? __('attendance.record.curriculum_help') : null, 'attrs' => 'data-curriculum-topic']) ?>
                                 </div>
                                 <?php if ($canProgress): ?>
                                     <div class="col-12 col-md-4">
@@ -284,7 +321,54 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
-                        <?= View::partial('partials/input', ['name' => 'homework', 'label' => __('attendance.record.homework'), 'type' => 'textarea', 'value' => $session['homework'], 'attrs' => 'rows="3" maxlength="2000"']) ?>
+                        <fieldset class="hw-box mb-3">
+                            <legend class="form-label h6 mb-2"><i class="bi bi-pencil-square" aria-hidden="true"></i> <?= e(__('attendance.record.homework')) ?></legend>
+                            <label class="visually-hidden" for="f-homework"><?= e(__('attendance.record.homework')) ?></label>
+                            <textarea class="form-control<?= error_for('homework') !== null ? ' is-invalid' : '' ?>" id="f-homework" name="homework" rows="3" maxlength="2000"
+                                      placeholder="<?= e(__('attendance.homework.placeholder')) ?>"><?= e(old('homework', $session['homework'] ?? '')) ?></textarea>
+                            <?php if (error_for('homework') !== null): ?><div class="invalid-feedback d-block"><?= e(error_for('homework')) ?></div><?php endif; ?>
+
+                            <div class="row g-2 align-items-end mt-1">
+                                <div class="col-12 col-sm-6">
+                                    <label class="form-label small mb-1" for="f-homework_due"><?= e(__('attendance.homework.due')) ?></label>
+                                    <input class="form-control form-control-sm<?= error_for('homework_due') !== null ? ' is-invalid' : '' ?>" type="date" id="f-homework_due" name="homework_due"
+                                           min="<?= e($session['lesson_date']) ?>" value="<?= e(old('homework_due', $session['homework_due'] ?? '')) ?>">
+                                </div>
+                            </div>
+                            <?php if (error_for('homework_due') !== null): ?><div class="invalid-feedback d-block"><?= e(error_for('homework_due')) ?></div><?php endif; ?>
+
+                            <?php if ($attachments !== []): ?>
+                                <div class="mt-3">
+                                    <div class="small fw-semibold mb-1"><?= e(__('attendance.homework.attached')) ?></div>
+                                    <?= View::partial('partials/homework_attachments', ['attachments' => $attachments, 'removable' => true]) ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="mt-3">
+                                <div class="small fw-semibold mb-1"><i class="bi bi-link-45deg" aria-hidden="true"></i> <?= e(__('attendance.homework.links')) ?></div>
+                                <div class="hw-links" data-hw-links>
+                                    <div class="hw-link-row" data-hw-link-row>
+                                        <input class="form-control form-control-sm" type="text" name="homework_links[0][url]" dir="ltr" inputmode="url" maxlength="500" autocomplete="off"
+                                               placeholder="https://" aria-label="<?= e(__('attendance.homework.link_url')) ?>">
+                                        <input class="form-control form-control-sm" type="text" name="homework_links[0][title]" maxlength="190"
+                                               placeholder="<?= e(__('attendance.homework.link_title')) ?>" aria-label="<?= e(__('attendance.homework.link_title')) ?>">
+                                    </div>
+                                </div>
+                                <button class="btn btn-link btn-sm px-0" type="button" data-hw-add-link><i class="bi bi-plus-lg" aria-hidden="true"></i> <?= e(__('attendance.homework.add_link')) ?></button>
+                                <?php if (error_for('homework_links') !== null): ?>
+                                    <?php foreach (\App\Core\View::shared('errors')['homework_links'] ?? [] as $message): ?><div class="invalid-feedback d-block"><?= e($message) ?></div><?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="mt-2">
+                                <label class="small fw-semibold mb-1 d-block" for="f-homework_files"><i class="bi bi-paperclip" aria-hidden="true"></i> <?= e(__('attendance.homework.files')) ?></label>
+                                <input class="form-control form-control-sm<?= error_for('homework_files') !== null ? ' is-invalid' : '' ?>" type="file" id="f-homework_files" name="homework_files[]" multiple
+                                       accept="<?= e(implode(',', array_map(static fn ($x) => '.' . $x, $upload['extensions']))) ?>" aria-describedby="help-homework_files">
+                                <div class="form-text" id="help-homework_files"><?= e(__('attendance.homework.files_help', ['types' => implode(', ', $upload['extensions']), 'max' => $upload['maxMb'], 'count' => \App\Services\LessonAttachments::MAX_FILES])) ?></div>
+                                <?php foreach (\App\Core\View::shared('errors')['homework_files'] ?? [] as $message): ?><div class="invalid-feedback d-block"><?= e($message) ?></div><?php endforeach; ?>
+                            </div>
+                            <p class="form-text mb-0 mt-2"><i class="bi bi-eye" aria-hidden="true"></i> <?= e(__('attendance.homework.visible')) ?></p>
+                        </fieldset>
                         <?= View::partial('partials/input', ['name' => 'lesson_notes', 'label' => __('attendance.record.lesson_notes'), 'type' => 'textarea', 'value' => $session['lesson_notes'],
                             'help' => __('attendance.record.notes_help'), 'attrs' => 'rows="3" maxlength="2000"']) ?>
                     <?php else: ?>
@@ -293,7 +377,14 @@ $showOnline = $live !== null || $online['held'] || ($canEdit && !$cancelled && $
                             <?php if ($currentTopic !== null && isset($topicOptions[$currentTopic])): ?>
                                 <dt><?= e(__('attendance.record.curriculum_topic_id')) ?></dt><dd><?= e($topicOptions[$currentTopic]) ?></dd>
                             <?php endif; ?>
-                            <dt><?= e(__('attendance.record.homework')) ?></dt><dd class="text-prewrap"><?= e($session['homework'] ?? '—') ?></dd>
+                            <dt><?= e(__('attendance.record.homework')) ?></dt>
+                            <dd>
+                                <div class="text-prewrap"><?= e($session['homework'] ?? '—') ?></div>
+                                <?php if ($session['homework_due'] !== null): ?>
+                                    <div class="small text-secondary"><?= e(__('attendance.homework.due_on', ['date' => date('d/m/Y', strtotime($session['homework_due']))])) ?></div>
+                                <?php endif; ?>
+                                <?= View::partial('partials/homework_attachments', ['attachments' => $attachments]) ?>
+                            </dd>
                             <dt><?= e(__('attendance.record.lesson_notes')) ?></dt><dd class="mb-0 text-prewrap"><?= e($session['lesson_notes'] ?? '—') ?></dd>
                         </dl>
                     <?php endif; ?>

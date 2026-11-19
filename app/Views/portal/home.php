@@ -93,6 +93,12 @@ $pct = static fn ($score, $max): string => $score === null || (float) $max <= 0 
                         <li class="list-group-item">
                             <strong><?= e($row['subject']) ?></strong> <small class="text-secondary" dir="ltr"><?= e(date('d/m', strtotime($row['lesson_date']))) ?></small>
                             <div class="small text-prewrap"><?= e($row['homework']) ?></div>
+                            <?php if ($row['homework_due'] !== null): ?>
+                                <div class="small text-primary"><?= e(__('portal.due_on', ['date' => date('d/m', strtotime($row['homework_due']))])) ?></div>
+                            <?php endif; ?>
+                            <?php if ($row['attachments'] !== []): ?>
+                                <div class="small text-secondary"><i class="bi bi-paperclip" aria-hidden="true"></i> <a href="<?= e(url('/me/homework')) ?>"><?= e(__('portal.attachments')) ?> (<?= count($row['attachments']) ?>)</a></div>
+                            <?php endif; ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>
