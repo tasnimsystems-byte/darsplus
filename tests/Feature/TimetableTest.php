@@ -253,6 +253,23 @@ final class TimetableTest extends TestCase
         self::assertSame(404, $this->get('/timetable', ['view' => 'class', 'id' => (string) $this->class71])->status);
         self::assertStringNotContainsString('id="tt-class"', $page->body, 'No class list for a teacher who is not a homeroom teacher.');
         self::assertDoesNotMatchRegularExpression('/<option value="' . $others[0] . '"/', $page->body);
+        // Every link on their timetable opens (a class they may not see is not a link: no 404 from a click).
+        self::assertStringNotContainsString('view=class&amp;id=' . $this->class71, $page->body);
+        preg_match_all('#href="(/timetable\?[^"]+)"#', $page->body, $links);
+        foreach ($links[1] as $link) {
+            parse_str((string) parse_url(html_entity_decode($link), PHP_URL_QUERY), $query);
+            self::assertSame(200, $this->get('/timetable', $query)->status, $link);
+        }
+        // A lesson of this week that already took place opens its lesson page from the timetable.
+        self::assertMatchesRegularExpression('#name="teaching_assignment_id" value="(\d+)">\s*<input type="hidden" name="lesson_date" value="([\d-]+)">\s*<input type="hidden" name="period_number" value="(\d+)">#', $page->body);
+        preg_match('#name="teaching_assignment_id" value="(\d+)">\s*<input type="hidden" name="lesson_date" value="([\d-]+)">\s*<input type="hidden" name="period_number" value="(\d+)">#', $page->body, $form);
+        self::assertLessThanOrEqual(date('Y-m-d'), $form[2], 'Only lessons up to today.');
+        $opened = $this->post('/attendance/sessions', ['teaching_assignment_id' => $form[1], 'lesson_date' => $form[2], 'period_number' => $form[3]]);
+        self::assertSame(200, $this->get((string) parse_url((string) $opened->location(), PHP_URL_PATH))->status);
+        preg_match('#href="(/attendance/sessions/\d+)"#', $this->get('/timetable')->body, $lessonLink);
+        self::assertNotEmpty($lessonLink, 'The opened lesson is now a link.');
+        self::assertSame(200, $this->get($lessonLink[1])->status);
+        App::db()->run('DELETE FROM lesson_sessions WHERE school_id = ?', [$this->school]);
         // As homeroom teacher of ז1 they see that class too.
         App::db()->update('classes', ['homeroom_teacher_id' => $this->teacherLevi], ['id' => $this->class71]);
         self::assertSame(200, $this->get('/timetable', ['view' => 'class', 'id' => (string) $this->class71])->status);

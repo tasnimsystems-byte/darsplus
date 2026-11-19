@@ -45,6 +45,9 @@ $subjectTitle = $view === 'teacher' ? ($teachers[$id] ?? '') : ($classes[$id] ??
         <?php endif; ?>
     </div></div>
 <?php else: ?>
+    <?php if ($week !== []): ?>
+        <p class="small text-secondary mb-2"><i class="bi bi-info-circle" aria-hidden="true"></i> <?= e(__('timetable.week_lessons_help')) ?></p>
+    <?php endif; ?>
     <div class="card">
         <div class="table-responsive">
             <table class="table table-bordered timetable-grid mb-0">
@@ -52,7 +55,12 @@ $subjectTitle = $view === 'teacher' ? ($teachers[$id] ?? '') : ($classes[$id] ??
                 <thead><tr>
                     <th scope="col"><?= e(__('timetable.period')) ?></th>
                     <?php foreach ($days as $day): ?>
-                        <th scope="col"><?= e(__('timetable.days.' . $day)) ?></th>
+                        <th scope="col">
+                            <?= e(__('timetable.days.' . $day)) ?>
+                            <?php if ($week !== []): ?>
+                                <small class="d-block text-secondary fw-normal" dir="ltr"><?= e(date('d/m', strtotime($week['sunday'] . " +$day days"))) ?></small>
+                            <?php endif; ?>
+                        </th>
                     <?php endforeach; ?>
                 </tr></thead>
                 <tbody>
@@ -74,14 +82,45 @@ $subjectTitle = $view === 'teacher' ? ($teachers[$id] ?? '') : ($classes[$id] ??
                         <?php foreach ($days as $day): ?>
                             <td>
                                 <?php foreach ($grid[$number][$day] ?? [] as $slot): ?>
+                                    <?php
+                                    $sessionId = $slot['session_id'] ?? null;
+                                    $openable = $slot['openable'] ?? false;
+                                    $isToday = ($slot['date'] ?? null) === ($week['today'] ?? '');
+                                    ?>
                                     <div class="timetable-lesson">
-                                        <strong><?= e($slot['subject_name']) ?></strong>
+                                        <?php if ($sessionId !== null): ?>
+                                            <a class="lesson-link" href="<?= e(url('/attendance/sessions/' . (int) $sessionId)) ?>"
+                                               title="<?= e(__('timetable.open_lesson', ['class' => $slot['class_name'], 'subject' => $slot['subject_name']])) ?>">
+                                                <strong><?= e($slot['subject_name']) ?></strong>
+                                                <span class="badge text-bg-success"><i class="bi bi-check2" aria-hidden="true"></i> <?= e(__('timetable.opened')) ?></span>
+                                            </a>
+                                        <?php elseif ($openable): ?>
+                                            <form method="post" action="<?= e(url('/attendance/sessions')) ?>">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="teaching_assignment_id" value="<?= (int) $slot['teaching_assignment_id'] ?>">
+                                                <input type="hidden" name="lesson_date" value="<?= e($slot['date']) ?>">
+                                                <input type="hidden" name="period_number" value="<?= (int) $number ?>">
+                                                <button class="btn btn-sm <?= $isToday ? 'btn-primary' : 'btn-outline-primary' ?> w-100 text-start lesson-open" type="submit"
+                                                        aria-label="<?= e(__('timetable.open_lesson', ['class' => $slot['class_name'], 'subject' => $slot['subject_name']])) ?>">
+                                                    <strong><?= e($slot['subject_name']) ?></strong>
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <strong><?= e($slot['subject_name']) ?></strong>
+                                        <?php endif; ?>
                                         <?php if ($slot['group_name'] !== ''): ?><span class="text-secondary">(<?= e($slot['group_name']) ?>)</span><?php endif; ?>
                                         <small class="d-block">
+                                            <?php /* Only a timetable the user may open is a link (a teacher sees only their own and their homeroom class's). */ ?>
                                             <?php if ($view === 'teacher'): ?>
-                                                <a href="<?= e(url('/timetable?view=class&id=' . (int) $slot['class_id'])) ?>"><?= e($slot['class_name']) ?></a>
-                                            <?php else: ?>
+                                                <?php if (isset($classes[(int) $slot['class_id']])): ?>
+                                                    <a href="<?= e(url('/timetable?view=class&id=' . (int) $slot['class_id'])) ?>"><?= e($slot['class_name']) ?></a>
+                                                <?php else: ?>
+                                                    <?= e($slot['class_name']) ?>
+                                                <?php endif; ?>
+                                            <?php elseif (isset($teachers[(int) $slot['teacher_id']])): ?>
                                                 <a href="<?= e(url('/timetable?view=teacher&id=' . (int) $slot['teacher_id'])) ?>"><?= e($slot['teacher_name']) ?></a>
+                                            <?php else: ?>
+                                                <?= e($slot['teacher_name']) ?>
                                             <?php endif; ?>
                                             <?php if ($slot['room_name'] !== null): ?> | <?= e($slot['room_name']) ?><?php endif; ?>
                                         </small>

@@ -116,7 +116,7 @@ final class TimetableController extends Controller
         $grid = [];
         if ($id > 0) {
             foreach ($this->db()->all(
-                "SELECT ts.weekday, ts.period_number, s.name AS subject_name, c.name AS class_name, ta.group_name, ta.class_id,
+                "SELECT ts.weekday, ts.period_number, ts.teaching_assignment_id, s.name AS subject_name, c.name AS class_name, ta.group_name, ta.class_id,
                         ta.teacher_id, CONCAT(t.last_name, ' ', t.first_name) AS teacher_name, r.name AS room_name
                    FROM timetable_slots ts JOIN teaching_assignments ta ON ta.id = ts.teaching_assignment_id
                    JOIN subjects s ON s.id = ta.subject_id JOIN classes c ON c.id = ta.class_id JOIN teachers t ON t.id = ta.teacher_id
@@ -128,6 +128,40 @@ final class TimetableController extends Controller
                 $grid[(int) $slot['period_number']][(int) $slot['weekday']][] = $slot;
             }
         }
+        // A teacher's lessons open this week's lesson page (to record attendance and the lesson), as on the
+        // home page: a lesson already opened links to it; one that took place this week can be opened now.
+        $scope = new AccessScope($this->db(), $this->auth());
+        $week = [];
+        if ($view === 'teacher' && $id > 0 && $grid !== []) {
+            $today = date('Y-m-d');
+            $sunday = date('Y-m-d', strtotime($today . ' -' . date('w') . ' days'));
+            $sessions = [];
+            foreach ($this->db()->all(
+                "SELECT ls.id, ls.teaching_assignment_id, ls.lesson_date, ls.period_number FROM lesson_sessions ls
+                   JOIN teaching_assignments ta ON ta.id = ls.teaching_assignment_id
+                  WHERE ls.school_id = ? AND ta.teacher_id = ? AND ls.lesson_date BETWEEN ? AND ?",
+                [$schoolId, $id, $sunday, date('Y-m-d', strtotime("$sunday +6 days"))]
+            ) as $row) {
+                $sessions["{$row['teaching_assignment_id']}|{$row['lesson_date']}|{$row['period_number']}"] = (int) $row['id'];
+            }
+            $canRecord = can('attendance.create') && !$year['is_locked'];
+            foreach ($grid as $number => $days) {
+                foreach ($days as $day => $slots) {
+                    $date = date('Y-m-d', strtotime("$sunday +$day days"));
+                    foreach ($slots as $i => $slot) {
+                        $assignment = (int) $slot['teaching_assignment_id'];
+                        $mine = $scope->canEditAssignment($assignment);
+                        $grid[$number][$day][$i] += [
+                            'date' => $date,
+                            'session_id' => $mine || can('attendance.view') ? ($sessions["$assignment|$date|$number"] ?? null) : null,
+                            'openable' => $mine && $canRecord && $date <= $today && $date >= $year['start_date'] && $date <= $year['end_date'],
+                        ];
+                    }
+                }
+            }
+            $week = ['sunday' => $sunday, 'today' => $today];
+        }
+
         $periods = self::periods($this->db(), $schoolId, (int) $year['id']);
         foreach (array_keys($grid) as $number) {
             $periods[$number] ??= ['period_number' => $number, 'name' => '', 'start_time' => null, 'end_time' => null, 'is_break' => 0];
@@ -135,6 +169,7 @@ final class TimetableController extends Controller
         ksort($periods);
 
         return $this->view('timetable/index', [
+            'week' => $week,
             'year' => $year, 'view' => $view, 'id' => $id, 'classes' => $classes, 'teachers' => $teachers,
             'grid' => $grid, 'periods' => $periods, 'days' => self::days($this->db(), $schoolId, (int) $year['id']),
             'lastImport' => $this->db()->one(
