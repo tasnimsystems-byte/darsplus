@@ -14,6 +14,7 @@ $title = View::shared('title');
     <script src="<?= e(asset('js/theme.js')) ?>"></script>
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/bootstrap.rtl.min.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap-icons/bootstrap-icons.min.css')) ?>">
+    <?= \App\Core\View::partial('partials/head_icons') ?>
     <link rel="stylesheet" href="<?= e(asset('css/fonts.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/tokens.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
@@ -21,7 +22,7 @@ $title = View::shared('title');
 <body class="auth-body">
 <main class="auth-wrap" id="main">
     <div class="auth-brand">
-        <i class="bi bi-mortarboard" aria-hidden="true"></i>
+        <img class="app-logo" src="<?= e(asset('img/logo-192.png')) ?>" alt="" width="96" height="96">
         <span class="app-brand-name"><?= e(__('app.name')) ?>
             <small><?= App::lang()->locale() === 'ar' ? 'DarsPlus' : 'درس بلاس' ?></small></span>
     </div>

@@ -1,4 +1,4 @@
-/* DarsPlus design tokens – "Sky" theme: a white page, sky blue and its neighbours.
+/* DarsPlus design tokens – the logo's colours on a white page: royal blue (from navy to sky) with orange and amber.
    Three layers:
      1. primitives  – raw palette, type scale, spacing, radii (never used by components directly);
      2. semantic    – what a value is for (--c-surface, --c-text-muted, --c-primary…); components use only these;
@@ -10,42 +10,52 @@
 
 /* ---------- 1. Primitives ---------- */
 :root {
-    /* Sky (the brand) */
-    --p-sky-50: #f2f9ff;
-    --p-sky-100: #e0f2fe;
-    --p-sky-200: #bae6fd;
-    --p-sky-300: #7dd3fc;
-    --p-sky-400: #38bdf8;
-    --p-sky-500: #0ea5e9;
-    --p-sky-700: #0272b0;
-    --p-sky-800: #025b8d;
-    --p-sky-900: #0c3c5e;
-    --p-cyan-500: #06b6d4;
-    --p-azure-600: #2563eb;
+    /* Blue of the logo's "D": navy at the foot, royal blue, sky at the top */
+    --p-blue-50: #f3f7fe;
+    --p-blue-100: #e7effd;
+    --p-blue-200: #c9dbfa;
+    --p-blue-300: #8cbcff;
+    --p-blue-400: #5aa2ff;
+    --p-sky-500: #0b8ff5;
+    --p-blue-600: #1667e0;
+    --p-blue-700: #0a4fc0;
+    --p-blue-800: #063a94;
+    --p-navy-900: #01185d;
+
+    /* Orange of the logo's "+": amber to orange */
+    --p-amber-400: #fdb302;
+    --p-orange-400: #fd8a1a;
+    --p-orange-500: #fd5a01;
+    --p-orange-700: #b84600;
+    --p-orange-800: #a33f00;
+    --p-orange-50: #fff1e2;
 
     /* Ink (text on white) */
-    --p-ink-900: #0f2a3d;
-    --p-ink-700: #44607a;
-    --p-ink-500: #587188;
-    --p-line-100: #edf4fa;
-    --p-line-200: #e1edf6;
-    --p-line-300: #cfe2f0;
-    --p-line-400: #b4cde0;
+    --p-ink-900: #0d1f3c;
+    --p-ink-700: #44587a;
+    --p-ink-500: #58698a;
+    --p-line-100: #eef2f9;
+    --p-line-200: #e2e8f3;
+    --p-line-300: #cfd9ea;
 
     /* Night (dark mode) */
-    --p-night-950: #08131e;
-    --p-night-900: #0a1622;
-    --p-night-850: #0f1f2e;
-    --p-night-800: #142838;
-    --p-night-700: #1f3a50;
-    --p-night-600: #34556e;
-    --p-night-text: #e4eef6;
-    --p-night-muted: #a3b9cb;
+    --p-night-950: #070f1d;
+    --p-night-900: #0a1424;
+    --p-night-850: #0f1b2e;
+    --p-night-800: #14233a;
+    --p-night-700: #1f3150;
+    --p-night-text: #e6edf8;
+    --p-night-muted: #a6b5cc;
 
     /* Bright (junior) */
     --p-sun-400: #ffc93c;
     --p-berry-500: #d6336c;
     --p-cream-50: #fffdf7;
+
+    /* The logo as gradients */
+    --brand-blue: linear-gradient(135deg, var(--p-sky-500), var(--p-blue-700) 55%, var(--p-navy-900));
+    --brand-warm: linear-gradient(135deg, var(--p-amber-400), var(--p-orange-500));
+    --brand-band: linear-gradient(90deg, var(--p-navy-900), var(--p-blue-700) 45%, var(--p-sky-500) 70%, var(--p-orange-400) 88%, var(--p-amber-400));
 
     /* Type scale (rem) and rhythm */
     --fs-xs: 0.75rem;
@@ -82,54 +92,57 @@
     --c-page: #ffffff;
     --c-page-line: transparent;
     --c-surface: #ffffff;
-    --c-surface-2: var(--p-sky-50);
-    --c-surface-3: #e6f3fc;
-    --c-header: #f7fbfe;
+    --c-surface-2: var(--p-blue-50);
+    --c-surface-3: #e9f0fc;
+    --c-header: #f7f9fe;
     --c-border: var(--p-line-200);
     --c-border-strong: var(--p-line-300);
-    --c-field-border: #7593ad;
+    --c-field-border: #7486a8;
     --c-field-border-hover: var(--c-primary);
     --c-row-line: var(--p-line-100);
     --c-text: var(--p-ink-900);
     --c-text-muted: var(--p-ink-700);
     --c-text-faint: var(--p-ink-500);
 
-    --c-primary: var(--p-sky-700);
-    --c-primary-rgb: 2, 114, 176;
-    --c-primary-strong: var(--p-sky-800);
-    --c-primary-soft: var(--p-sky-100);
+    --c-primary: var(--p-blue-700);
+    --c-primary-rgb: 10, 79, 192;
+    --c-primary-strong: var(--p-blue-800);
+    --c-primary-soft: var(--p-blue-100);
     --c-on-primary: #fff;
-    --c-accent: var(--p-sky-400);
-    --c-accent-rgb: 56, 189, 248;
-    --c-accent-soft: #e3f6ff;
-    --c-on-accent: #072a42;
-    --c-focus: #0284c7;
-    --c-highlight: #eaf7ff;
+    /* The orange of the "+": highlights, the current item's marker, a brand touch – never body text on white. */
+    --c-accent: var(--p-orange-400);
+    --c-accent-rgb: 253, 138, 26;
+    --c-accent-strong: var(--p-orange-700);
+    --c-accent-soft: var(--p-orange-50);
+    --c-on-accent: #2e1300;
+    --c-focus: var(--p-blue-600);
+    --c-highlight: #edf3fe;
 
-    /* The menu: white, set apart by a hairline; the current page in sky. */
+    /* The menu: white, set apart by a hairline; the current page in the logo's blue with an orange marker. */
     --c-nav: #ffffff;
-    --c-nav-deep: var(--p-sky-50);
-    --c-nav-text: #23405a;
+    --c-nav-deep: var(--p-blue-50);
+    --c-nav-text: #22375c;
     --c-nav-muted: var(--p-ink-500);
     --c-nav-edge: var(--p-line-200);
-    --c-nav-hover: #f0f8fe;
-    --c-nav-active: var(--p-sky-100);
-    --c-nav-active-text: var(--p-sky-800);
+    --c-nav-hover: #f2f6fe;
+    --c-nav-active: var(--p-blue-100);
+    --c-nav-active-text: var(--p-blue-800);
+    --c-nav-marker: var(--p-orange-500);
     --c-topbar: rgba(255, 255, 255, 0.9);
 
     /* The online lesson room stays dark whatever the theme, so faces and screens stand out. */
-    --c-stage: #0b1a2a;
-    --c-stage-raise: #13283c;
+    --c-stage: #0a1426;
+    --c-stage-raise: #13223b;
 
-    --c-info-bg: #e6f4fd;      --c-info-fg: #0b4a6f;    --c-info-edge: #38a3d8;
+    --c-info-bg: #e8f1fd;      --c-info-fg: #0b3f80;    --c-info-edge: #3b82e6;
     --c-success-bg: #e5f6ee;   --c-success-fg: #17533a; --c-success-edge: #3fa36b;
-    --c-warning-bg: #fff5d9;   --c-warning-fg: #6b4b0d; --c-warning-edge: #f0b429;
+    --c-warning-bg: #fff4e0;   --c-warning-fg: #6e4100; --c-warning-edge: #fd9a1a;
     --c-danger-bg: #fdeaea;    --c-danger-fg: #8a1f1f;  --c-danger-edge: #d64545;
 
-    --chart-1: #0272b0; --chart-2: #38bdf8; --chart-3: #f59e0b; --chart-4: #14b8a6;
-    --chart-5: #6366f1; --chart-6: #ec4899; --chart-7: #84cc16; --chart-8: #64748b;
+    --chart-1: #0a4fc0; --chart-2: #fd8a1a; --chart-3: #0b8ff5; --chart-4: #14b8a6;
+    --chart-5: #01185d; --chart-6: #fdb302; --chart-7: #84cc16; --chart-8: #64748b;
 
-    --shadow-rgb: 15, 60, 100;
+    --shadow-rgb: 10, 40, 100;
     --shadow-sheet: 0 1px 2px rgba(var(--shadow-rgb), 0.05), 0 10px 26px -18px rgba(var(--shadow-rgb), 0.3);
     --shadow-lift: 0 2px 4px rgba(var(--shadow-rgb), 0.06), 0 18px 34px -18px rgba(var(--shadow-rgb), 0.38);
     --chalk-grain: 0;
@@ -143,57 +156,59 @@
     --lh-body: 1.7;
 }
 
-/* ---------- 3a. Dark: a night sky ---------- */
+/* ---------- 3a. Dark: the logo's navy ---------- */
 [data-bs-theme="dark"] {
     --c-page: var(--p-night-900);
     --c-page-line: transparent;
     --c-surface: var(--p-night-850);
     --c-surface-2: var(--p-night-800);
-    --c-surface-3: #1a3346;
-    --c-header: #12263a;
+    --c-surface-3: #1a2c48;
+    --c-header: #122340;
     --c-border: var(--p-night-700);
-    --c-border-strong: #29475f;
-    --c-field-border: #52748f;
-    --c-field-border-hover: #46708e;
-    --c-row-line: #18304a;
+    --c-border-strong: #2a3f63;
+    --c-field-border: #56709a;
+    --c-field-border-hover: #6f8fc4;
+    --c-row-line: #18284a;
     --c-text: var(--p-night-text);
     --c-text-muted: var(--p-night-muted);
-    --c-text-faint: #8aa3b7;
+    --c-text-faint: #8b9bb5;
 
-    --c-primary: var(--p-sky-400);
-    --c-primary-rgb: 56, 189, 248;
-    --c-primary-strong: var(--p-sky-300);
-    --c-primary-soft: #0c3550;
-    --c-on-primary: #04263a;
-    --c-accent: var(--p-sky-300);
-    --c-accent-rgb: 125, 211, 252;
-    --c-accent-soft: #0e3a55;
-    --c-on-accent: #04263a;
-    --c-focus: var(--p-sky-300);
-    --c-highlight: #10314a;
+    --c-primary: var(--p-blue-400);
+    --c-primary-rgb: 90, 162, 255;
+    --c-primary-strong: var(--p-blue-300);
+    --c-primary-soft: #11295a;
+    --c-on-primary: #041a3a;
+    --c-accent: #ffa04d;
+    --c-accent-rgb: 255, 160, 77;
+    --c-accent-strong: #ffb36e;
+    --c-accent-soft: #3a2310;
+    --c-on-accent: #2e1300;
+    --c-focus: var(--p-blue-300);
+    --c-highlight: #122b55;
 
     --c-nav: var(--p-night-950);
-    --c-nav-deep: #060f18;
-    --c-nav-text: #d6e6f3;
-    --c-nav-muted: #8ba6bb;
-    --c-nav-edge: #1a3043;
+    --c-nav-deep: #050b16;
+    --c-nav-text: #d6e2f5;
+    --c-nav-muted: #8b9fbd;
+    --c-nav-edge: #18284a;
     --c-nav-hover: rgba(255, 255, 255, 0.05);
-    --c-nav-active: #0f3a57;
-    --c-nav-active-text: #bfe8ff;
-    --c-topbar: rgba(10, 22, 34, 0.88);
+    --c-nav-active: #14315e;
+    --c-nav-active-text: #cfe0ff;
+    --c-nav-marker: #ffa04d;
+    --c-topbar: rgba(10, 20, 36, 0.88);
 
-    --c-info-bg: #0f3048;      --c-info-fg: #bfe3f8;    --c-info-edge: #38a3d8;
+    --c-info-bg: #102a52;      --c-info-fg: #c7dcfb;    --c-info-edge: #5aa2ff;
     --c-success-bg: #12332a;   --c-success-fg: #b7e6cc; --c-success-edge: #3fa36b;
-    --c-warning-bg: #352a10;   --c-warning-fg: #f6d98e; --c-warning-edge: #f0b429;
+    --c-warning-bg: #3a2610;   --c-warning-fg: #ffd59a; --c-warning-edge: #fd9a1a;
     --c-danger-bg: #3b1717;    --c-danger-fg: #f6c1c1;  --c-danger-edge: #e05c5c;
 
-    --chart-1: #38bdf8; --chart-2: #7dd3fc; --chart-3: #fbbf24; --chart-4: #2dd4bf;
-    --chart-5: #818cf8; --chart-6: #f472b6; --chart-7: #a3e635; --chart-8: #94a3b8;
+    --chart-1: #5aa2ff; --chart-2: #ffa04d; --chart-3: #38bdf8; --chart-4: #2dd4bf;
+    --chart-5: #a5b4fc; --chart-6: #fcd34d; --chart-7: #a3e635; --chart-8: #94a3b8;
 
     --shadow-rgb: 0, 0, 0;
 }
 
-/* ---------- 3b. Teen students (intermediate & secondary): the same sky, rounder and a little larger ---------- */
+/* ---------- 3b. Teen students (intermediate & secondary): the same colours, rounder and a little larger ---------- */
 [data-audience="teen"] {
     --fs-base: 1rem;
     --radius: 0.75rem;

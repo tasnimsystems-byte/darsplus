@@ -1,4 +1,4 @@
-/* DarsPlus – components and pages ("Sky": white page, sky blue), on top of Bootstrap 5 RTL and tokens.css.
+/* DarsPlus – components and pages (the logo's blue and orange on a white page), on top of Bootstrap 5 RTL and tokens.css.
    Only semantic tokens (--c-*, --fs-*, --sp-*, --radius*) are used here, so every theme
    (staff / teen / junior, light / dark) reaches every component.
    Logical properties only (inline-start/end, block-start/end): the layout follows the text direction.
@@ -258,16 +258,17 @@ h1, .h1, h2, .h2, .h3 {
     border-block-end: 1px solid var(--c-nav-edge);
 }
 
-.app-sidebar-brand .bi {
-    display: grid;
-    place-items: center;
-    flex: 0 0 2.4rem;
-    height: 2.4rem;
-    border-radius: 0.8rem;
-    background: linear-gradient(135deg, var(--c-accent), var(--c-primary));
-    color: #fff;
-    font-size: 1.3rem;
-    box-shadow: 0 8px 18px -10px rgba(var(--c-primary-rgb), 0.9);
+/* The logo (transparent PNG): it sits on white in light mode and on navy in dark mode. */
+.app-logo {
+    display: block;
+    flex: 0 0 auto;
+    width: 2.75rem;
+    height: 2.75rem;
+    object-fit: contain;
+}
+
+.app-sidebar-brand .app-brand-name small {
+    color: var(--c-accent-strong);
 }
 
 .app-nav-group {
@@ -303,7 +304,7 @@ h1, .h1, h2, .h2, .h3 {
     color: var(--c-nav-active-text);
 }
 
-/* "You are here": a sky pill with a bar at its inline start. */
+/* "You are here": a blue pill with the logo's orange as a bar at its inline start. */
 .app-sidebar .nav-link.active {
     background: var(--c-nav-active);
     color: var(--c-nav-active-text);
@@ -322,7 +323,7 @@ h1, .h1, h2, .h2, .h3 {
     inset-block: 0.45rem;
     width: 3px;
     border-radius: 3px;
-    background: var(--c-primary);
+    background: var(--c-nav-marker);
 }
 
 .app-sidebar :focus-visible {
@@ -455,7 +456,7 @@ h1, .h1, h2, .h2, .h3 {
     height: 4px;
     margin-block-start: 0.45rem;
     border-radius: 4px;
-    background: linear-gradient(to left, var(--c-accent), var(--c-focus));
+    background: linear-gradient(to left, var(--c-primary) 0 62%, var(--c-accent) 62%);
 }
 
 .card {
@@ -517,7 +518,7 @@ h1, .h1, h2, .h2, .h3 {
     --bs-table-bg: transparent;
     --bs-table-color: var(--c-text);
     --bs-table-border-color: var(--c-row-line);
-    --bs-table-hover-bg: rgba(var(--c-accent-rgb), 0.09);
+    --bs-table-hover-bg: rgba(var(--c-primary-rgb), 0.06);
     --bs-table-hover-color: var(--c-text);
     --bs-table-striped-bg: color-mix(in srgb, var(--c-surface-2) 45%, transparent);
 }
@@ -596,7 +597,7 @@ h1, .h1, h2, .h2, .h3 {
     --bs-list-group-bg: transparent;
     --bs-list-group-color: var(--c-text);
     --bs-list-group-border-color: var(--c-row-line);
-    --bs-list-group-action-hover-bg: rgba(var(--c-accent-rgb), 0.09);
+    --bs-list-group-action-hover-bg: rgba(var(--c-primary-rgb), 0.06);
     --bs-list-group-action-hover-color: var(--c-text);
 }
 
@@ -738,7 +739,7 @@ h1, .h1, h2, .h2, .h3 {
     to { translate: 100% 0; }
 }
 
-/* ---------- Guest pages: a white page lit by soft sky ---------- */
+/* ---------- Guest pages: a white page lit softly in the logo's blue and orange ---------- */
 .auth-body {
     min-height: 100vh;
     background:
@@ -770,16 +771,14 @@ h1, .h1, h2, .h2, .h3 {
     animation: sheet-in 0.5s var(--ease-out) both;
 }
 
-.auth-brand .bi {
-    display: grid;
-    place-items: center;
-    width: 3.6rem;
-    height: 3.6rem;
-    border-radius: 1.1rem;
-    background: linear-gradient(135deg, var(--c-accent), var(--c-primary));
-    color: #fff;
-    font-size: 1.9rem;
-    box-shadow: 0 14px 28px -14px rgba(var(--c-primary-rgb), 0.9);
+.auth-brand .app-logo {
+    width: 6rem;
+    height: 6rem;
+    filter: drop-shadow(0 12px 18px rgba(var(--c-primary-rgb), 0.18));
+}
+
+.auth-brand .app-brand-name small {
+    color: var(--c-accent-strong);
 }
 
 .auth-card {
@@ -792,14 +791,14 @@ h1, .h1, h2, .h2, .h3 {
     animation: sheet-in 0.55s 0.08s var(--ease-out) both;
 }
 
-/* A band of sky across the top of the card. */
+/* A band in the logo's colours across the top of the card: navy, blue, sky, then orange. */
 .auth-card::before {
     content: "";
     position: absolute;
     inset-block-start: 0;
     inset-inline: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--c-accent), var(--c-primary));
+    background: var(--brand-band);
 }
 
 .auth-card .card-body {
@@ -1893,3 +1892,65 @@ button.att-dot:focus-visible { outline: 3px solid var(--bs-primary); outline-off
 .live-list { display: grid; gap: var(--sp-3); }
 .live-card { border-inline-start: 4px solid #e5484d; }
 .live-banner { background: var(--c-surface); border: 1px solid var(--c-border); border-inline-start: 4px solid #e5484d; }
+
+/* ==== Lesson page: how the lesson is given, and the homework box ==== */
+.delivery-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+}
+.delivery-label { font-weight: 600; }
+.delivery-choice .btn { display: inline-flex; align-items: center; gap: var(--sp-1); }
+
+.hw-box {
+    padding: var(--sp-3);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    background: var(--c-surface-2);
+}
+.hw-box legend { float: none; width: auto; font-size: var(--fs-md); }
+.hw-link-row {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-2);
+}
+@media (max-width: 575.98px) {
+    .hw-link-row { grid-template-columns: minmax(0, 1fr); }
+}
+.hw-attachments { display: grid; gap: var(--sp-1); }
+.hw-attachment {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-1) var(--sp-2);
+    padding: var(--sp-1) var(--sp-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    min-width: 0;
+}
+.hw-attachment > a { overflow-wrap: anywhere; min-width: 0; }
+.hw-attachment .bi { color: var(--c-primary); }
+.hw-url { max-width: 12rem; }
+
+/* ==== The logo in small places ==== */
+.app-footer-logo { width: 1.1rem; height: 1.1rem; object-fit: contain; }
+/* On the dark stage the blue "D" needs a light tile behind it. */
+.meet-logo {
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.2rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    object-fit: contain;
+}
+/* Dark mode: the logo's navy would sink into the night background, so it sits on a white tile. */
+[data-bs-theme="dark"] .app-logo {
+    padding: 0.2rem;
+    border-radius: 0.65rem;
+    background: #fff;
+}
+[data-bs-theme="dark"] .auth-brand .app-logo { padding: 0.45rem; border-radius: 1.2rem; }

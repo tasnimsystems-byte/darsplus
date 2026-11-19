@@ -18,7 +18,7 @@ $isActive = static fn (string $item): bool => $item === $best;
 ?>
 <div class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="sidebar" aria-labelledby="sidebar-title">
     <div class="app-sidebar-brand">
-        <i class="bi bi-mortarboard" aria-hidden="true"></i>
+        <img class="app-logo" src="<?= e(asset('img/logo-96.png')) ?>" alt="" width="44" height="44">
         <span id="sidebar-title" class="app-brand-name"><?= e(__('app.name')) ?>
             <small lang="<?= App::lang()->locale() === 'ar' ? 'en' : 'ar' ?>"<?= App::lang()->locale() === 'ar' ? ' dir="ltr"' : '' ?>><?= App::lang()->locale() === 'ar' ? 'DarsPlus' : 'درس بلاس' ?></small></span>
         <button type="button" class="btn-close btn-close-white d-lg-none ms-auto" data-bs-dismiss="offcanvas"

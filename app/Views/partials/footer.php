@@ -5,6 +5,7 @@ use App\Core\App;
 $vendor = (array) App::config('app.vendor', []);
 ?>
 <footer class="app-footer d-print-none">
+    <img class="app-footer-logo" src="<?= e(asset('img/logo-96.png')) ?>" alt="" width="18" height="18">
     <span>&copy; <?= e(date('Y')) ?> <strong><?= e(__('app.name')) ?></strong><?php if (__('app.name') !== 'DarsPlus'): ?> <span dir="ltr">DarsPlus</span><?php endif; ?></span>
     <span class="app-footer-sep" aria-hidden="true">·</span>
     <span><?= e(__('app.made_by', ['vendor' => (string) ($vendor['name'] ?? '')])) ?></span>

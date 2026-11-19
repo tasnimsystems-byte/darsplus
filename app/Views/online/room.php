@@ -25,6 +25,7 @@ foreach (['you', 'host', 'staff', 'joined', 'left', 'hand_raised', 'hand_lowered
 
     <header class="meet-bar">
         <div class="meet-heading">
+            <img class="meet-logo" src="<?= e(asset('img/logo-96.png')) ?>" alt="<?= e(__('app.name')) ?>" width="36" height="36">
             <span class="meet-live" aria-hidden="true"></span>
             <div class="min-w-0">
                 <h1 class="meet-title"><?= e($meeting['subject_name']) ?> <span class="meet-where">· <?= e($where) ?></span></h1>

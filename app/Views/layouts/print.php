@@ -11,6 +11,7 @@ $title = View::shared('title');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ? $title . ' · ' : '') . __('app.name')) ?></title>
     <link rel="stylesheet" href="<?= e(asset('vendor/bootstrap/bootstrap.rtl.min.css')) ?>">
+    <?= \App\Core\View::partial('partials/head_icons') ?>
     <link rel="stylesheet" href="<?= e(asset('css/fonts.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/tokens.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">

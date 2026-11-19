@@ -1,3 +1,5 @@
+<p align="center"><img src="public/assets/img/logo-192.png" alt="DarsPlus" width="120"></p>
+
 # درس بلاس – DarsPlus
 
 מערכת לניהול פדגוגי בית-ספרי (בעבר SPMS).
